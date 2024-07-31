@@ -1,0 +1,5 @@
+-r common.txt
+Flask-DebugToolbar==0.15.1
+packaging==24.1
+pip3-autoremove==1.2.2
+setuptools==72.1.0
