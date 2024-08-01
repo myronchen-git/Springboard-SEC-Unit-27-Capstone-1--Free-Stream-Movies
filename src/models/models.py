@@ -6,7 +6,7 @@ from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import CheckConstraint
 from sqlalchemy.exc import IntegrityError
 
-from src.exceptions.UserRegistrationError import UserRegistrationError
+from exceptions.UserRegistrationError import UserRegistrationError
 
 # ==================================================
 

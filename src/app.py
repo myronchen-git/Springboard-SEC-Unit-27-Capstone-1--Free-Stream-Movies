@@ -2,7 +2,7 @@ import os
 
 from flask import Flask
 
-from src.models.models import connect_db, db
+from models.models import connect_db, db
 
 # ==================================================
 
