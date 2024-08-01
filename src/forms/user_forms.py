@@ -20,3 +20,13 @@ class RegisterUserForm(FlaskForm):
 
     email = EmailField("Email", validators=[
         InputRequired(message="Email is required.")])
+
+
+class LoginUserForm(FlaskForm):
+    """Form to log in a user."""
+
+    username = StringField("Username", validators=[
+        InputRequired(message="Username is required.")])
+
+    password = PasswordField("Password", validators=[
+        InputRequired(message="Password is required.")])

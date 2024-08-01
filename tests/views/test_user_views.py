@@ -12,6 +12,7 @@ from types import MappingProxyType
 from unittest import TestCase
 
 from flask import url_for
+from flask_login import current_user
 
 from app import create_app
 from models.models import User, connect_db, db
@@ -203,3 +204,104 @@ class UserRegistrationViewTestCase(TestCase):
                     user.username, _USER_REGISTRATION_DATA_1['username'])
                 self.assertEqual(
                     user.email, _USER_REGISTRATION_DATA_1['email'])
+
+
+class UserLoginViewTestCase(TestCase):
+    """Tests for user login views."""
+
+    def setUp(self):
+        db.session.query(User).delete()
+        db.session.commit()
+
+        with app.test_client() as client:
+            client.post(
+                url_for("register_user"),
+                data=dict(_USER_REGISTRATION_DATA_1),
+                follow_redirects=True)
+
+    def tearDown(self):
+        db.session.rollback()
+
+    def test_display_user_login_form(self):
+        """Tests displaying the user login form."""
+
+        # Arrange
+        url = url_for("login_user")
+
+        # Act
+        with app.test_client() as client:
+            resp = client.get(url)
+            html = resp.get_data(as_text=True)
+
+        # Assert
+        self.assertEqual(resp.status_code, 200)
+        self.assertIn("<h1>User Login</h1>", html)
+        self.assertIn("Username", html)
+        self.assertIn("Password", html)
+
+    def test_login_user(self):
+        """Tests that a user can successfully log in."""
+
+        # Arrange
+        url = url_for("login_user")
+        data = {"username": _USER_REGISTRATION_DATA_1['username'],
+                "password": _USER_REGISTRATION_DATA_1['password']}
+
+        # Act
+        with app.test_client() as client:
+            resp = client.post(url, data=data, follow_redirects=True)
+            html = resp.get_data(as_text=True)
+
+        # Assert
+            self.assertEqual(resp.status_code, 200)
+            self.assertIn("Successfully logged in.", html)
+
+            self.assertIsInstance(current_user, User)
+
+    def test_login_user_with_missing_info(self):
+        """Tests that logging in with missing info should fail."""
+
+        # Arrange
+        url = url_for("login_user")
+        data_list = [
+            {"username": _USER_REGISTRATION_DATA_1['username']},
+            {"username": _USER_REGISTRATION_DATA_1['username'],
+                "password": ""},
+            {"password": _USER_REGISTRATION_DATA_1['password']},
+            {"username": "", "password": _USER_REGISTRATION_DATA_1['password']}]
+
+        # Act
+        for data in data_list:
+            with self.subTest(data=data):
+                with app.test_client() as client:
+                    resp = client.post(url, data=data, follow_redirects=True)
+                    html = resp.get_data(as_text=True)
+
+        # Assert
+                    self.assertIn("is required.", html)
+
+                    self.assertNotIsInstance(current_user, User)
+
+    def test_login_user_with_incorrect_info(self):
+        """Tests that logging in with wrong username or password should fail."""
+
+        # Arrange
+        url = url_for("login_user")
+        data_list = [
+            {"username": "user99",
+                "password": _USER_REGISTRATION_DATA_1['password']},
+            {"username": _USER_REGISTRATION_DATA_1['username'],
+                "password": "0000000000"}
+        ]
+
+        # Act
+        for data in data_list:
+            with self.subTest(data=data):
+                with app.test_client() as client:
+                    resp = client.post(url, data=data, follow_redirects=True)
+                    html = resp.get_data(as_text=True)
+
+        # Assert
+                    self.assertIn("Invalid credentials.", html)
+
+                    self.assertNotIsInstance(current_user, User)

@@ -2,6 +2,7 @@ from typing import Self
 
 from flask import Flask
 from flask_bcrypt import Bcrypt
+from flask_login import UserMixin
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import CheckConstraint
 from sqlalchemy.exc import IntegrityError
@@ -24,7 +25,7 @@ def connect_db(app: Flask):
         db.init_app(app)
 
 
-class User(db.Model):
+class User(db.Model, UserMixin):
     """Represents a user."""
 
     __tablename__ = 'users'

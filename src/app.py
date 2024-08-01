@@ -1,10 +1,12 @@
 import os
 
+import flask_login
 from flask import Flask, flash, redirect, render_template, url_for
 from flask_debugtoolbar import DebugToolbarExtension
+from flask_login import LoginManager, login_user
 
 from exceptions.UserRegistrationError import UserRegistrationError
-from forms.user_forms import RegisterUserForm
+from forms.user_forms import LoginUserForm, RegisterUserForm
 from models.models import User, connect_db, db
 
 # ==================================================
@@ -20,6 +22,9 @@ def create_app(db_name, testing=False):
 
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', "it's a secret")
+
+    login_manager = LoginManager()
+    login_manager.init_app(app)
 
     if not testing:
         app.config['SQLALCHEMY_ECHO'] = False
@@ -58,6 +63,33 @@ def create_app(db_name, testing=False):
                       f"{str(e)}", "error")
 
         return render_template("users/registration.html", form=form)
+
+    @app.route('/users/login', methods=['GET', 'POST'])
+    def login_user():
+        """Displays the form to log in a user, and logs in a user."""
+
+        form = LoginUserForm()
+
+        if form.validate_on_submit():
+            user = User.authenticate(form.username.data, form.password.data)
+
+            if user:
+                flask_login.login_user(user, remember=True)
+                flash("Successfully logged in.", "info")
+
+                return redirect(url_for("home"))
+
+            flash("Invalid credentials.", 'danger')
+
+        return render_template("users/login.html", form=form)
+
+    @login_manager.user_loader
+    def load_user(user_id):
+        return db.session.get(User, user_id)
+
+    @login_manager.unauthorized_handler
+    def unauthorized_handler():
+        return 'Unauthorized', 401
 
     return app
 
