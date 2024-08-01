@@ -1,6 +1,6 @@
 import os
 
-from flask import Flask
+from flask import Flask, render_template
 
 from models.models import connect_db, db
 
@@ -30,6 +30,12 @@ def create_app(db_name, testing=False):
         # debug = DebugToolbarExtension(app)
 
     # --------------------------------------------------
+
+    @app.route('/')
+    def home():
+        """Render homepage."""
+
+        return render_template('base.html')
 
     return app
 
