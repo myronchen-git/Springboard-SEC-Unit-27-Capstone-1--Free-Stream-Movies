@@ -128,3 +128,68 @@ class UserModelTestCase(TestCase):
         # clean up
                 # needed since subtest is not a true parametrized test
                 db.session.rollback()
+
+
+class UserRegistrationTestCase(TestCase):
+    """Tests for user registration."""
+
+    def setUp(self):
+        db.session.query(User).delete()
+
+    def tearDown(self):
+        db.session.rollback()
+
+    def test_user_registration(self):
+        """Tests successfully registering a user."""
+
+        # Act
+        user = User.register(_USER_DATA_1)
+
+        # Assert
+        self.assertEqual(user.username, _USER_DATA_1['username'])
+        self.assertTrue(user.password)
+        self.assertNotEqual(user.password, _USER_DATA_1['password'])
+        self.assertEqual(user.email, _USER_DATA_1['email'])
+
+        users = db.session.query(User).all()
+        self.assertEqual(len(users), 1)
+        self.assertEqual(users[0].username, _USER_DATA_1['username'])
+        self.assertTrue(users[0].password)
+        self.assertNotEqual(users[0].password, _USER_DATA_1['password'])
+        self.assertEqual(users[0].email, _USER_DATA_1['email'])
+
+    def test_user_registration_without_required_data(self):
+        """Tests that registration fast-fails if required info is not given."""
+
+        # Arrange
+        required_properties = ["username", "password", "email"]
+
+        for property in required_properties:
+            with self.subTest(required_property=property):
+                data = dict(_USER_DATA_1)
+                data[property] = None
+
+        # Act/Assert
+                self.assertRaises(ValueError, User.register, data)
+
+        # clean up
+                # needed since subtest is not a true parametrized test
+                db.session.rollback()
+
+    def test_user_registration_with_empty_string_required_data(self):
+        """Tests that registration fast-fails if required info is given as empty strings."""
+
+        # Arrange
+        required_properties = ["username", "password", "email"]
+
+        for property in required_properties:
+            with self.subTest(required_property=property):
+                data = dict(_USER_DATA_1)
+                data[property] = ""
+
+        # Act/Assert
+                self.assertRaises(ValueError, User.register, data)
+
+        # clean up
+                # needed since subtest is not a true parametrized test
+                db.session.rollback()
