@@ -4,6 +4,7 @@ from unittest import TestCase
 from sqlalchemy.exc import IntegrityError
 
 from src.app import create_app
+from src.exceptions.UserRegistrationError import UserRegistrationError
 from src.models.models import User, connect_db, db
 
 # ==================================================
@@ -170,7 +171,7 @@ class UserRegistrationTestCase(TestCase):
                 data[property] = None
 
         # Act/Assert
-                self.assertRaises(ValueError, User.register, data)
+                self.assertRaises(UserRegistrationError, User.register, data)
 
         # clean up
                 # needed since subtest is not a true parametrized test
@@ -188,7 +189,7 @@ class UserRegistrationTestCase(TestCase):
                 data[property] = ""
 
         # Act/Assert
-                self.assertRaises(ValueError, User.register, data)
+                self.assertRaises(UserRegistrationError, User.register, data)
 
         # clean up
                 # needed since subtest is not a true parametrized test

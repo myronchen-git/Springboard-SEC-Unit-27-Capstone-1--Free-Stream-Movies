@@ -6,6 +6,8 @@ from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import CheckConstraint
 from sqlalchemy.exc import IntegrityError
 
+from src.exceptions.UserRegistrationError import UserRegistrationError
+
 # ==================================================
 
 bcrypt = Bcrypt()
@@ -78,7 +80,8 @@ class User(db.Model):
 
         for prop in required_properties:
             if not user_data.get(prop):
-                raise ValueError(f"Missing {prop} for user registration.")
+                raise UserRegistrationError(
+                    f"Missing {prop} for user registration.")
 
         # Put user data into new dictionary if data is a table column, other than ID, and if value is truthy.
         data = {k: v for k, v in user_data.items()
@@ -94,4 +97,4 @@ class User(db.Model):
             return user
         except IntegrityError:  # can catch other non-duplicate integrity errors; need to revisit
             db.session.rollback()
-            raise ValueError("Duplicate username or email.")
+            raise UserRegistrationError("Duplicate username or email.")
