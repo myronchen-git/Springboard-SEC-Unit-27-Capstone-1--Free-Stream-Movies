@@ -1,8 +1,10 @@
 import os
 
-from flask import Flask, render_template
+from flask import Flask, flash, redirect, render_template, url_for
 
-from models.models import connect_db, db
+from exceptions.UserRegistrationError import UserRegistrationError
+from forms.user_forms import RegisterUserForm
+from models.models import User, connect_db, db
 
 # ==================================================
 
@@ -36,6 +38,25 @@ def create_app(db_name, testing=False):
         """Render homepage."""
 
         return render_template('base.html')
+
+    @app.route("/users/registration", methods=["GET", "POST"])
+    def register_user():
+        """Displays the form to register a user, and registers a user."""
+
+        form = RegisterUserForm()
+
+        if form.validate_on_submit():
+            try:
+                User.register(form.data)
+
+                flash("Successfully registered.", "info")
+                return redirect(url_for("home"))
+
+            except UserRegistrationError as e:
+                flash(f"Invalid input(s) on registration form: "
+                      f"{str(e)}", "error")
+
+        return render_template("users/registration.html", form=form)
 
     return app
 
