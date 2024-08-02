@@ -32,13 +32,11 @@ def create_app(db_name, testing=False):
     if not testing:
         app.config['SQLALCHEMY_ECHO'] = False
         app.config['DEBUG_TB_INTERCEPT_REDIRECTS'] = False
-        app.config['DEBUG_TB_HOSTS'] = ["dont-show-debug-toolbar"]
+        debug = DebugToolbarExtension(app)
 
     else:
         app.config['TESTING'] = True
         app.config['SQLALCHEMY_ECHO'] = True
-        app.config['DEBUG_TB_INTERCEPT_REDIRECTS'] = True
-        debug = DebugToolbarExtension(app)
 
     # --------------------------------------------------
 
