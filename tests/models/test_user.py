@@ -46,6 +46,7 @@ class UserModelTestCase(TestCase):
 
     def setUp(self):
         db.session.query(User).delete()
+        db.session.commit()
 
     def tearDown(self):
         db.session.rollback()
@@ -146,6 +147,7 @@ class UserRegistrationTestCase(TestCase):
 
     def setUp(self):
         db.session.query(User).delete()
+        db.session.commit()
 
     def tearDown(self):
         db.session.rollback()
@@ -211,6 +213,7 @@ class UserAuthenticateTestCase(TestCase):
 
     def setUp(self):
         db.session.query(User).delete()
+        db.session.commit()
 
     def tearDown(self):
         db.session.rollback()
