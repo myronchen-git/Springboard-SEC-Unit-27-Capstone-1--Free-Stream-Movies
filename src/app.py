@@ -84,6 +84,14 @@ def create_app(db_name, testing=False):
 
         return render_template("users/login.html", form=form)
 
+    @app.route('/users/logout', methods=['POST'])
+    def logout_user():
+        """Logs out the current user."""
+
+        flask_login.logout_user()
+        flash("Logout successful.", "info")
+        return redirect(url_for("home"))
+
     @login_manager.user_loader
     def load_user(user_id):
         return db.session.get(User, user_id)

@@ -308,3 +308,44 @@ class UserLoginViewTestCase(TestCase):
                     self.assertIn("Invalid credentials.", html)
 
                     self.assertNotIsInstance(current_user, User)
+
+
+class UserLogoutTestCase(TestCase):
+    """Tests for user logout."""
+
+    def setUp(self):
+        db.session.query(User).delete()
+        db.session.commit()
+
+        with app.test_client() as client:
+            client.post(
+                url_for("register_user"),
+                data=dict(_USER_REGISTRATION_DATA_1))
+
+    def tearDown(self):
+        db.session.rollback()
+
+    def test_logout_user(self):
+        """Tests logging out successfully."""
+
+        # Arrange
+        url = url_for("logout_user")
+
+        login_data = {"username": _USER_REGISTRATION_DATA_1['username'],
+                      "password": _USER_REGISTRATION_DATA_1['password']}
+
+        with app.test_client() as client:
+            client.post(
+                url_for("login_user"),
+                data=login_data)
+
+            self.assertIsInstance(current_user, User)
+
+        # Act
+            resp = client.post(url)
+
+        # Assert
+            self.assertEqual(resp.status_code, 302)
+            self.assertEqual(resp.location, url_for("home"))
+
+            self.assertNotIsInstance(current_user, User)
