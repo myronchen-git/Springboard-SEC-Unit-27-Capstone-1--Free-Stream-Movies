@@ -23,6 +23,9 @@ def create_app(db_name, testing=False):
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', "it's a secret")
 
+    # temp for development
+    app.config['REMEMBER_COOKIE_DURATION'] = 60
+
     login_manager = LoginManager()
     login_manager.init_app(app)
 
