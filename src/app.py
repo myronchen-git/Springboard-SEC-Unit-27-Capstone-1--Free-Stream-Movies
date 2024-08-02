@@ -54,7 +54,8 @@ def create_app(db_name, testing=False):
 
         if form.validate_on_submit():
             try:
-                User.register(form.data)
+                user = User.register(form.data)
+                flask_login.login_user(user, remember=True)
 
                 flash("Successfully registered.", "info")
                 return redirect(url_for("home"))
@@ -76,8 +77,8 @@ def create_app(db_name, testing=False):
 
             if user:
                 flask_login.login_user(user, remember=True)
-                flash("Successfully logged in.", "info")
 
+                flash("Successfully logged in.", "info")
                 return redirect(url_for("home"))
 
             flash("Invalid credentials.", 'danger')
@@ -89,6 +90,7 @@ def create_app(db_name, testing=False):
         """Logs out the current user."""
 
         flask_login.logout_user()
+
         flash("Logout successful.", "info")
         return redirect(url_for("home"))
 

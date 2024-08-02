@@ -85,15 +85,21 @@ class UserRegistrationViewTestCase(TestCase):
             html = resp.get_data(as_text=True)
 
         # Assert
-        self.assertEqual(resp.status_code, 200)
-        self.assertIn("Successfully registered.", html)
+            self.assertEqual(resp.status_code, 200)
+            self.assertIn("Successfully registered.", html)
 
-        user = db.session.query(User).one()
-        self.assertEqual(user.username, _USER_REGISTRATION_DATA_1['username'])
-        self.assertTrue(user.password)
-        self.assertNotEqual(
-            user.password, _USER_REGISTRATION_DATA_1['password'])
-        self.assertEqual(user.email, _USER_REGISTRATION_DATA_1['email'])
+            user = db.session.query(User).one()
+            self.assertEqual(
+                user.username, _USER_REGISTRATION_DATA_1['username'])
+            self.assertTrue(user.password)
+            self.assertNotEqual(
+                user.password, _USER_REGISTRATION_DATA_1['password'])
+            self.assertEqual(user.email, _USER_REGISTRATION_DATA_1['email'])
+
+            self.assertIsInstance(current_user, User)
+
+        # cleanup
+            logout_user()
 
     def test_registering_user_with_missing_required_info(self):
         """Tests that registering without required info should fail."""
@@ -218,6 +224,8 @@ class UserLoginViewTestCase(TestCase):
                 url_for("register_user"),
                 data=dict(_USER_REGISTRATION_DATA_1),
                 follow_redirects=True)
+
+            logout_user()
 
     def tearDown(self):
         db.session.rollback()
