@@ -17,26 +17,29 @@ CURR_USER_KEY = "curr_user"
 def create_app(db_name, testing=False):
     app = Flask(__name__)
 
-    app.config['SQLALCHEMY_DATABASE_URI'] = (
-        os.environ.get('DATABASE_URL', f'postgresql://postgres@localhost/{db_name}'))
-
-    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-    app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', "it's a secret")
-
-    # temp for development
-    app.config['REMEMBER_COOKIE_DURATION'] = 60
+    app.config.update(
+        SQLALCHEMY_DATABASE_URI=os.environ.get(
+            'DATABASE_URL', f'postgresql://postgres@localhost/{db_name}'),
+        SQLALCHEMY_TRACK_MODIFICATIONS=False,
+        SECRET_KEY=os.environ.get('SECRET_KEY', "it's a secret"),
+        REMEMBER_COOKIE_DURATION=60  # temp for development
+    )
 
     login_manager = LoginManager()
     login_manager.init_app(app)
 
     if not testing:
-        app.config['SQLALCHEMY_ECHO'] = False
-        app.config['DEBUG_TB_INTERCEPT_REDIRECTS'] = False
+        app.config.update(
+            SQLALCHEMY_ECHO=False,
+            DEBUG_TB_INTERCEPT_REDIRECTS=False
+        )
         debug = DebugToolbarExtension(app)
 
     else:
-        app.config['TESTING'] = True
-        app.config['SQLALCHEMY_ECHO'] = True
+        app.config.update(
+            TESTING=True,
+            SQLALCHEMY_ECHO=True
+        )
 
     # --------------------------------------------------
 
