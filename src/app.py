@@ -1,6 +1,7 @@
 import os
 
 from flask import Flask, flash, redirect, render_template, url_for
+from flask_debugtoolbar import DebugToolbarExtension
 
 from exceptions.UserRegistrationError import UserRegistrationError
 from forms.user_forms import RegisterUserForm
@@ -29,7 +30,7 @@ def create_app(db_name, testing=False):
         app.config['TESTING'] = True
         app.config['SQLALCHEMY_ECHO'] = True
         app.config['DEBUG_TB_INTERCEPT_REDIRECTS'] = True
-        # debug = DebugToolbarExtension(app)
+        debug = DebugToolbarExtension(app)
 
     # --------------------------------------------------
 
