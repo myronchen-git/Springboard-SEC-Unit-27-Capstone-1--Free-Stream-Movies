@@ -12,7 +12,7 @@ from types import MappingProxyType
 from unittest import TestCase
 
 from flask import url_for
-from flask_login import current_user
+from flask_login import current_user, logout_user
 
 from app import create_app
 from models.models import User, connect_db, db
@@ -257,6 +257,9 @@ class UserLoginViewTestCase(TestCase):
             self.assertIn("Successfully logged in.", html)
 
             self.assertIsInstance(current_user, User)
+
+        # cleanup
+            logout_user()
 
     def test_login_user_with_missing_info(self):
         """Tests that logging in with missing info should fail."""
