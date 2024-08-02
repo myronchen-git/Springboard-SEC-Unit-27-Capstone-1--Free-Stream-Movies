@@ -204,3 +204,50 @@ class UserRegistrationTestCase(TestCase):
         # clean up
                 # needed since subtest is not a true parametrized test
                 db.session.rollback()
+
+
+class UserAuthenticateTestCase(TestCase):
+    """Tests for user authentication."""
+
+    def setUp(self):
+        db.session.query(User).delete()
+
+    def tearDown(self):
+        db.session.rollback()
+
+    def test_user_authentication(self):
+        """Tests successfully authenticating a user."""
+
+        # Arrange
+        User.register(_USER_DATA_1)
+
+        # Act
+        user = User.authenticate(
+            _USER_DATA_1['username'], _USER_DATA_1['password'])
+
+        # Assert
+        self.assertTrue(user)
+        self.assertEqual(user.username, _USER_DATA_1['username'])
+
+    def test_user_authentication_with_nonexistent_username(self):
+        """Authenticating with a nonexistent username should return False."""
+
+        # Act
+        user = User.authenticate(
+            _USER_DATA_1['username'], _USER_DATA_1['password'])
+
+        # Assert
+        self.assertFalse(user)
+
+    def test_user_authentication_with_incorrect_password(self):
+        """Authenticating with an incorrect password should return False."""
+
+        # Arrange
+        User.register(_USER_DATA_1)
+        diff_pass = "incorrect password"
+
+        # Act
+        user = User.authenticate(_USER_DATA_1['username'], diff_pass)
+
+        # Assert
+        self.assertFalse(user)
