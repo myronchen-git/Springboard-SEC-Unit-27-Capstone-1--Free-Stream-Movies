@@ -32,7 +32,7 @@ db.create_all()
 
 # --------------------------------------------------
 
-_USER_DATA_1 = MappingProxyType({
+_USER_REGISTRATION_DATA_1 = MappingProxyType({
     "username": "testuser1",
     "password": "password",
     "repeated_password": "password",
@@ -41,7 +41,7 @@ _USER_DATA_1 = MappingProxyType({
 
 
 class UserRegistrationViewTestCase(TestCase):
-    """Tests for User views."""
+    """Tests for user registration views."""
 
     def setUp(self):
         db.session.query(User).delete()
@@ -77,8 +77,10 @@ class UserRegistrationViewTestCase(TestCase):
 
         # Act
         with app.test_client() as client:
-            resp = client.post(url, data=dict(
-                _USER_DATA_1), follow_redirects=True)
+            resp = client.post(
+                url,
+                data=dict(_USER_REGISTRATION_DATA_1),
+                follow_redirects=True)
             html = resp.get_data(as_text=True)
 
         # Assert
@@ -86,10 +88,11 @@ class UserRegistrationViewTestCase(TestCase):
         self.assertIn("Successfully registered.", html)
 
         user = db.session.query(User).one()
-        self.assertEqual(user.username, _USER_DATA_1['username'])
+        self.assertEqual(user.username, _USER_REGISTRATION_DATA_1['username'])
         self.assertTrue(user.password)
-        self.assertNotEqual(user.password, _USER_DATA_1['password'])
-        self.assertEqual(user.email, _USER_DATA_1['email'])
+        self.assertNotEqual(
+            user.password, _USER_REGISTRATION_DATA_1['password'])
+        self.assertEqual(user.email, _USER_REGISTRATION_DATA_1['email'])
 
     def test_registering_user_with_missing_required_info(self):
         """Tests that registering without required info should fail."""
@@ -101,7 +104,7 @@ class UserRegistrationViewTestCase(TestCase):
 
         for missing_data in missing_data_list:
             with self.subTest(missing_data=missing_data):
-                data = dict(_USER_DATA_1)
+                data = dict(_USER_REGISTRATION_DATA_1)
                 del data[missing_data]
 
         # Act
@@ -126,7 +129,7 @@ class UserRegistrationViewTestCase(TestCase):
 
         for empty_string_data in empty_string_data_list:
             with self.subTest(empty_string_data=empty_string_data):
-                data = dict(_USER_DATA_1)
+                data = dict(_USER_REGISTRATION_DATA_1)
                 data[empty_string_data] = ""
 
         # Act
@@ -146,7 +149,7 @@ class UserRegistrationViewTestCase(TestCase):
 
         # Arrange
         url = url_for("register_user")
-        data = dict(_USER_DATA_1)
+        data = dict(_USER_REGISTRATION_DATA_1)
         data['repeated_password'] = "other password"
 
         # Act
@@ -167,8 +170,8 @@ class UserRegistrationViewTestCase(TestCase):
         # Arrange
         url = url_for("register_user")
         nonunique_data_list = [
-            {"username": _USER_DATA_1['username']},
-            {"email": _USER_DATA_1['email']}
+            {"username": _USER_REGISTRATION_DATA_1['username']},
+            {"email": _USER_REGISTRATION_DATA_1['email']}
         ]
         user_data_2 = MappingProxyType({
             "username": "testuser2",
@@ -178,7 +181,10 @@ class UserRegistrationViewTestCase(TestCase):
         })
 
         with app.test_client() as client:
-            client.post(url, data=dict(_USER_DATA_1), follow_redirects=True)
+            client.post(
+                url,
+                data=dict(_USER_REGISTRATION_DATA_1),
+                follow_redirects=True)
 
         for nonunique_data in nonunique_data_list:
             with self.subTest(nonunique_data=list(nonunique_data)[0]):
@@ -193,5 +199,7 @@ class UserRegistrationViewTestCase(TestCase):
                 self.assertIn("Duplicate username or email.", html)
 
                 user = db.session.query(User).one()
-                self.assertEqual(user.username, _USER_DATA_1['username'])
-                self.assertEqual(user.email, _USER_DATA_1['email'])
+                self.assertEqual(
+                    user.username, _USER_REGISTRATION_DATA_1['username'])
+                self.assertEqual(
+                    user.email, _USER_REGISTRATION_DATA_1['email'])
