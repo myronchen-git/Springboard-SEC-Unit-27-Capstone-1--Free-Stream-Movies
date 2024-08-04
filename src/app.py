@@ -9,6 +9,10 @@ from flask_login import LoginManager, login_user
 from exceptions.UserRegistrationError import UserRegistrationError
 from forms.user_forms import LoginUserForm, RegisterUserForm
 from models.common import connect_db, db
+from models.country_service import CountryService
+from models.movie import Movie
+from models.service import Service
+from models.streaming_option import StreamingOption
 from models.user import User
 
 # ==================================================
