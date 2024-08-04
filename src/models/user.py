@@ -1,28 +1,18 @@
 from typing import Self
 
-from flask import Flask
 from flask_bcrypt import Bcrypt
 from flask_login import UserMixin
-from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import CheckConstraint
 from sqlalchemy.exc import IntegrityError
 
 from exceptions.UserRegistrationError import UserRegistrationError
+from models.common import db
 
 # ==================================================
 
 bcrypt = Bcrypt()
-db = SQLAlchemy()
 
 # --------------------------------------------------
-
-
-def connect_db(app: Flask):
-    """Connect this database to provided Flask app."""
-
-    with app.app_context():
-        db.app = app
-        db.init_app(app)
 
 
 class User(db.Model, UserMixin):

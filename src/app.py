@@ -7,7 +7,8 @@ from flask_login import LoginManager, login_user
 
 from exceptions.UserRegistrationError import UserRegistrationError
 from forms.user_forms import LoginUserForm, RegisterUserForm
-from models.models import User, connect_db, db
+from models.common import connect_db, db
+from models.user import User
 
 # ==================================================
 

@@ -15,7 +15,8 @@ from flask import url_for
 from flask_login import current_user, logout_user
 
 from app import create_app
-from models.models import User, connect_db, db
+from models.common import connect_db, db
+from models.user import User
 
 # ==================================================
 
