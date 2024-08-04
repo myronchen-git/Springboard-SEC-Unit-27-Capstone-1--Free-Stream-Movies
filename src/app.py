@@ -1,6 +1,7 @@
 import os
 
 import flask_login
+from dotenv import load_dotenv
 from flask import Flask, flash, redirect, render_template, url_for
 from flask_debugtoolbar import DebugToolbarExtension
 from flask_login import LoginManager, login_user
@@ -12,7 +13,7 @@ from models.user import User
 
 # ==================================================
 
-CURR_USER_KEY = "curr_user"
+load_dotenv()
 
 
 def create_app(db_name, testing=False):
