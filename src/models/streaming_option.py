@@ -8,21 +8,23 @@ class StreamingOption(db.Model):
 
     __tablename__ = 'streaming_options'
 
+    id = db.Column(
+        db.Integer,
+        primary_key=True
+    )
+
     movie_id = db.Column(
         db.Text,
         db.ForeignKey('movies.id', ondelete='CASCADE'),
-        primary_key=True
     )
 
     country_code = db.Column(
         db.String(2),
-        primary_key=True
     )
 
     service_id = db.Column(
         db.Text,
         db.ForeignKey('services.id', ondelete='CASCADE'),
-        primary_key=True
     )
 
     link = db.Column(
