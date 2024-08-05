@@ -14,14 +14,14 @@ class StreamingOption(db.Model):
         primary_key=True
     )
 
-    service_id = db.Column(
-        db.Text,
-        db.ForeignKey('services.id', ondelete='CASCADE'),
+    country_code = db.Column(
+        db.String(2),
         primary_key=True
     )
 
-    country_code = db.Column(
-        db.String(2),
+    service_id = db.Column(
+        db.Text,
+        db.ForeignKey('services.id', ondelete='CASCADE'),
         primary_key=True
     )
 
@@ -36,7 +36,7 @@ class StreamingOption(db.Model):
     )
 
     expires_on = db.Column(
-        db.Integer
+        db.BigInteger
     )
 
     movie = db.relationship('Movie', back_populates='streaming_options')
