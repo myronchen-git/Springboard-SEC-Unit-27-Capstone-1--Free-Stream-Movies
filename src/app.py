@@ -2,7 +2,7 @@ import os
 
 import flask_login
 from dotenv import load_dotenv
-from flask import Flask, flash, redirect, render_template, url_for
+from flask import Flask, flash, redirect, render_template, request, url_for
 from flask_debugtoolbar import DebugToolbarExtension
 from flask_login import LoginManager, login_user
 
@@ -110,6 +110,27 @@ def create_app(db_name, testing=False):
     @login_manager.unauthorized_handler
     def unauthorized_handler():
         return 'Unauthorized', 401
+
+    # --------------------------------------------------
+
+    @app.route('/api/v1/<country_code>/<service>/movies')
+    def get_streaming_options(country_code, service):
+        """Retrieves a list of movie streaming options for a specified country and streaming service."""
+
+        page = request.args.get('page')
+        page = int(page) if page else None
+
+        movies_pagination = StreamingOption.get_streaming_options(
+            country_code, service, page)
+
+        items = [item.toJson() for item in movies_pagination.items]
+
+        return {
+            'items': items,
+            'page': movies_pagination.page,
+            'has_prev': movies_pagination.has_prev,
+            'has_next': movies_pagination.has_next,
+        }
 
     return app
 
