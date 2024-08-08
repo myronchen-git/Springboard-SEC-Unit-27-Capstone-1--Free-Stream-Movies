@@ -1,6 +1,7 @@
 import os
 
 import flask_login
+import requests
 from dotenv import load_dotenv
 from flask import Flask, flash, redirect, render_template, request, url_for
 from flask_debugtoolbar import DebugToolbarExtension
@@ -18,6 +19,9 @@ from models.user import User
 # ==================================================
 
 load_dotenv()
+RAPID_API_KEY = os.environ.get('RAPID_API_KEY')
+
+# --------------------------------------------------
 
 
 def create_app(db_name, testing=False):
@@ -131,6 +135,35 @@ def create_app(db_name, testing=False):
             'has_prev': movies_pagination.has_prev,
             'has_next': movies_pagination.has_next,
         }
+
+    # --------------------------------------------------
+
+    @app.route('/movies')
+    def search_titles():
+        """Calls Streaming Availability API to search for a specific movie."""
+
+        country = request.args.get('country')
+        title = request.args.get('title')
+
+        if not country or not title:
+            return redirect(url_for("home"))
+
+        url = "https://streaming-availability.p.rapidapi.com/shows/search/title"
+        headers = {'X-RapidAPI-Key': RAPID_API_KEY}
+        querystring = {"country": country,
+                       "title": title,
+                       "show_type": "movie"}
+
+        resp = requests.get(url, headers=headers, params=querystring)
+
+        if resp.status_code == 200:
+            movies = resp.json()
+
+            return render_template("movies/search_results.html", movies=movies)
+
+        else:
+            # temp, replace with custom error
+            return "Error", resp.status_code
 
     return app
 

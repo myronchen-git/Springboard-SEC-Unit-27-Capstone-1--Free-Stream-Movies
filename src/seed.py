@@ -1,10 +1,9 @@
 import logging
-import os
 import time
 
 import requests
 
-from app import create_app
+from app import RAPID_API_KEY, create_app
 from models.common import connect_db, db
 from models.country_service import CountryService
 from models.movie import Movie
@@ -14,7 +13,6 @@ from util.file_handling import read_services_blacklist
 
 # ==================================================
 
-RAPID_API_KEY = os.environ.get('RAPID_API_KEY')
 BLACKLISTED_SERVICES = read_services_blacklist()
 
 logger = logging.getLogger(__name__)
