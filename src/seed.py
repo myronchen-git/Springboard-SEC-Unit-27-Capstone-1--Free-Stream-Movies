@@ -1,4 +1,3 @@
-import logging
 import time
 
 import requests
@@ -10,17 +9,13 @@ from models.movie import Movie
 from models.service import Service
 from models.streaming_option import StreamingOption
 from util.file_handling import read_services_blacklist
+from util.logger import create_logger
 
 # ==================================================
 
 BLACKLISTED_SERVICES = read_services_blacklist()
 
-logger = logging.getLogger(__name__)
-logging.basicConfig(
-    filename='src/logs/seed.log',
-    format='%(asctime)s %(levelname)s, %(filename)s - line %(lineno)d, %(funcName)s: %(message)s',
-    encoding='utf-8',
-    level=logging.INFO)
+logger = create_logger(__name__, 'src/logs/seed.log')
 
 # --------------------------------------------------
 
@@ -54,29 +49,29 @@ def seed_services() -> None:
                         dark_theme_image=service['imageSet']['darkThemeImage'],
                         white_image=service['imageSet']['whiteImage']
                     )
-                    logging.debug(f'Service = {s}.')
+                    logger.debug(f'Service = {s}.')
 
                     cs = CountryService(
                         country_code=country_code,
                         service_id=service_id
                     )
-                    logging.debug(f'CountryService = {cs}.')
+                    logger.debug(f'CountryService = {cs}.')
 
                     if service_id not in added_services:
-                        logging.info(f'Adding {service_id} to session.')
+                        logger.info(f'Adding {service_id} to session.')
                         db.session.add(s)
                         added_services.add(service_id)
 
-                    logging.info(
-                        f'Adding {country_code} - {service['id']} to session.')
+                    logger.info(
+                        f'Adding {country_code}-{service['id']} to session.')
                     db.session.add(cs)
 
-        logging.debug('Committing services and countries-services.')
+        logger.debug('Committing services and countries-services.')
         db.session.commit()
 
     else:
-        logging.error(f'Unsuccessful response from API: '
-                      f'status code {resp.status_code}: {resp.text}.')
+        logger.error(f'Unsuccessful response from API: '
+                     f'status code {resp.status_code}: {resp.text}.')
 
 
 def seed_movies_and_streams_from_one_request(country: str, service_id: str, cursor: str = None) -> str | None:
@@ -117,10 +112,10 @@ def seed_movies_and_streams_from_one_request(country: str, service_id: str, curs
                 rating=show['rating'],
                 runtime=show.get('runtime')
             )
-            logging.debug(f'Movie = {m}.')
+            logger.debug(f'Movie = {m}.')
 
-            logging.info(f'Adding Movie {show['id']} ({show['title']}) '
-                         f'to session.')
+            logger.info(f'Adding Movie {show['id']} ({show['title']}) '
+                        f'to session.')
             db.session.add(m)
 
             for country_code, streaming_options in show['streamingOptions'].items():
@@ -136,25 +131,26 @@ def seed_movies_and_streams_from_one_request(country: str, service_id: str, curs
                             expires_soon=streaming_option['expiresSoon'],
                             expires_on=streaming_option.get('expiresOn')
                         )
-                        logging.debug(f'StreamingOption = {so}.')
+                        logger.debug(f'StreamingOption = {so}.')
 
-                        logging.info(f'Adding [{show['id']} ({show['title']}) - '
-                                     f'{country_code} - '
-                                     f'{streaming_option['service']['id']}] '
-                                     f'streaming option to session.')
+                        logger.info(f'Adding {show['id']}-'
+                                    f'{country_code}-'
+                                    f'{streaming_option['service']['id']} '
+                                    f'({show['title']}) '
+                                    f'streaming option to session.')
                         db.session.add(so)
 
-        logging.debug('Committing movies and streaming options.')
+        logger.debug('Committing movies and streaming options.')
         db.session.commit()
 
         if body['hasMore']:
-            logging.info(f'Response has more results.  '
-                         f'Next cursor is "{body['nextCursor']}".')
+            logger.info(f'Response has more results.  '
+                        f'Next cursor is "{body['nextCursor']}".')
             return body['nextCursor']
 
     else:
-        logging.error(f'Unsuccessful response from API: '
-                      f'status code {resp.status_code}: {resp.json()['message']}.')
+        logger.error(f'Unsuccessful response from API: '
+                     f'status code {resp.status_code}: {resp.json()['message']}.')
 
 
 def seed_movies_and_streams() -> None:
@@ -169,8 +165,8 @@ def seed_movies_and_streams() -> None:
         CountryService).filter_by(country_code='us', service_id='tubi').all()
 
     for country_service in countries_services:
-        logging.info(f'Seeding movies and streaming options for '
-                     f'{country_service.country_code} and {country_service.service_id}.')
+        logger.info(f'Seeding movies and streaming options for '
+                    f'{country_service.country_code} and {country_service.service_id}.')
         cursor = None
 
         while True:
