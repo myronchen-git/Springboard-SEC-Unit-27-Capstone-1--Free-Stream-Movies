@@ -7,6 +7,8 @@ from flask import Flask, flash, redirect, render_template, request, url_for
 from flask_debugtoolbar import DebugToolbarExtension
 from flask_login import LoginManager, login_user
 
+from adapters.streaming_availability_adapter import (
+    convert_show_json_into_movie_object, store_movie_and_streaming_options)
 from exceptions.UserRegistrationError import UserRegistrationError
 from forms.user_forms import LoginUserForm, RegisterUserForm
 from models.common import connect_db, db
@@ -20,6 +22,7 @@ from models.user import User
 
 load_dotenv()
 RAPID_API_KEY = os.environ.get('RAPID_API_KEY')
+DEFAULT_COUNTRY_CODE = 'us'
 
 # --------------------------------------------------
 
@@ -51,6 +54,8 @@ def create_app(db_name, testing=False):
             SQLALCHEMY_ECHO=True
         )
 
+    # --------------------------------------------------
+    # users
     # --------------------------------------------------
 
     @app.route('/')
@@ -116,6 +121,8 @@ def create_app(db_name, testing=False):
         return 'Unauthorized', 401
 
     # --------------------------------------------------
+    # api
+    # --------------------------------------------------
 
     @app.route('/api/v1/<country_code>/<service>/movies')
     def get_streaming_options(country_code, service):
@@ -136,6 +143,8 @@ def create_app(db_name, testing=False):
             'has_next': movies_pagination.has_next,
         }
 
+    # --------------------------------------------------
+    # movies
     # --------------------------------------------------
 
     @app.route('/movies')
@@ -164,6 +173,41 @@ def create_app(db_name, testing=False):
         else:
             # temp, replace with custom error
             return "Error", resp.status_code
+
+    @app.route('/movie/<movie_id>')
+    def movie_details_page(movie_id):
+        """Displays a specified movie's details page."""
+
+        movie = db.session.get(Movie, movie_id)
+
+        if not movie:
+            url = f"https://streaming-availability.p.rapidapi.com/shows/{movie_id}"
+            headers = {'X-RapidAPI-Key': RAPID_API_KEY}
+
+            resp = requests.get(url, headers=headers)
+            show = resp.json()
+
+            if resp.status_code == 200:
+                store_movie_and_streaming_options(show)
+
+                # Temporary Movie object used to store data.
+                # This is different than the same Movie retrieved from the database.
+                # Do not add to database session.
+                movie = convert_show_json_into_movie_object(show)
+
+            else:
+                # temp, replace with custom error
+                return "Error", resp.status_code
+
+        country_code = request.cookies.get('country_code', DEFAULT_COUNTRY_CODE)
+        streaming_options = db.session.query(StreamingOption).filter_by(
+            country_code=country_code, movie_id=movie.id).all()
+
+        return render_template("movies/details.html", movie=movie, streaming_options=streaming_options)
+
+    # --------------------------------------------------
+    # helper methods
+    # --------------------------------------------------
 
     return app
 

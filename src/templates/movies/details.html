@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+<!---->
+{% block title %}FreeStreamMovies | {{ movie.title }}{% endblock %}
+<!---->
+{% block content %}
+<h2>{{ movie.title }}</h2>
+<p>{{ movie.release_year }}</p>
+<p>{{ movie.runtime }} minutes</p>
+<p>Rating: {{ movie.rating }}</p>
+<p>{{ movie.overview }}</p>
+<section>
+  <h4>Directors</h4>
+  <ul>
+    {% for director in movie.directors %}
+    <li>{{ director }}</li>
+    {% endfor %}
+  </ul>
+</section>
+<section>
+  <h4>Cast</h4>
+  <ul>
+    {% for cast_member in movie.cast %}
+    <li>{{ cast_member }}</li>
+    {% endfor %}
+  </ul>
+</section>
+<section>
+  {% if streaming_options|length == 0 %}
+  Not free
+  {% else %}
+  <ul>
+    {% for streaming_option in streaming_options %}
+      <a href="{{ streaming_option.link }}">
+        {% if theme == 'dark' %}
+        <img src="{{ streaming_option.service.dark_theme_image }}" alt="streaming_option.service.name" height="72" />
+        {% else %}
+        <img src="{{ streaming_option.service.light_theme_image }}" alt="streaming_option.service.name" height="72" />
+        {% endif %}
+      </a>
+      {% if streaming_option.expires_soon %}
+      <span class="expires-soon">Expires Soon</span>
+      {% endif %}
+    {% endfor %}
+  </ul>
+  {% endif %}
+</section>
+{% endblock %}
