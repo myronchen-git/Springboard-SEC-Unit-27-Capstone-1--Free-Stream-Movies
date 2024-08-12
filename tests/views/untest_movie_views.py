@@ -115,7 +115,7 @@ class MovieDetailsViewTestCase(TestCase):
         movie = movie_generator(1)[0]
         movie_id = movie.id
         movie_title = movie.title
-        streaming_option = streaming_option_generator(1, country_code, service.id)[0]
+        streaming_option = streaming_option_generator(1, movie_id, country_code, service.id)[0]
         streaming_option_link = streaming_option.link
 
         db.session.add_all([service, movie, streaming_option])

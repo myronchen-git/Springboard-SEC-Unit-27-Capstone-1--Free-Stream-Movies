@@ -46,6 +46,7 @@ class StreamingOptionApiTestCase(TestCase):
     def setUpClass(cls):
         service = service_generator(1)[0]
         movie = movie_generator(1)[0]
+        cls.movie_id = movie.id
 
         db.session.add_all((service, movie))
         db.session.commit()
@@ -72,6 +73,7 @@ class StreamingOptionApiTestCase(TestCase):
 
         streaming_options = streaming_option_generator(
             21,
+            StreamingOptionApiTestCase.movie_id,
             StreamingOptionApiTestCase.COUNTRY_CODE,
             StreamingOptionApiTestCase.SERVICE_ID
         )
@@ -109,6 +111,7 @@ class StreamingOptionApiTestCase(TestCase):
 
         streaming_options = streaming_option_generator(
             21,
+            StreamingOptionApiTestCase.movie_id,
             StreamingOptionApiTestCase.COUNTRY_CODE,
             StreamingOptionApiTestCase.SERVICE_ID
         )

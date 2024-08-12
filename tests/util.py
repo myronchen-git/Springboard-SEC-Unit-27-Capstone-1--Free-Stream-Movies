@@ -55,7 +55,7 @@ def movie_generator(n: int) -> list[Movie]:
     return output
 
 
-def streaming_option_generator(n: int, country_code: str, service_id: str) -> list[StreamingOption]:
+def streaming_option_generator(n: int, movie_id: str, country_code: str, service_id: str) -> list[StreamingOption]:
     """Creates n StreamingOptions, with zero-indexed naming, and returning them in a List."""
 
     if n < 0 or n > 100:
@@ -66,7 +66,7 @@ def streaming_option_generator(n: int, country_code: str, service_id: str) -> li
     for i in range(n):
         output.append(
             StreamingOption(
-                movie_id="0",
+                movie_id=movie_id,
                 country_code=country_code,
                 service_id=service_id,
                 link=f"www.example{i:02d}.com",
