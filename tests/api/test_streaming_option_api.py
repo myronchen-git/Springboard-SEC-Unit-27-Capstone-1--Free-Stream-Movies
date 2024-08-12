@@ -3,8 +3,8 @@ from os.path import abspath, dirname, join
 
 # Adds src folder as a working directory.
 # This is needed so that imports can be found.
-root_dir = abspath(join(dirname(__file__), '../../src'))  # nopep8
-sys.path.append(root_dir)  # nopep8
+src_dir = abspath(join(dirname(__file__), '../../src'))  # nopep8
+sys.path.append(src_dir)  # nopep8
 
 # --------------------------------------------------
 
