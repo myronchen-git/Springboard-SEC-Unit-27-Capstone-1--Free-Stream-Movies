@@ -1,4 +1,4 @@
-from models.common import db
+from src.models.common import db
 
 # ==================================================
 

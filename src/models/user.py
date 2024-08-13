@@ -5,8 +5,8 @@ from flask_login import UserMixin
 from sqlalchemy import CheckConstraint
 from sqlalchemy.exc import IntegrityError
 
-from exceptions.UserRegistrationError import UserRegistrationError
-from models.common import db
+from src.exceptions.UserRegistrationError import UserRegistrationError
+from src.models.common import db
 
 # ==================================================
 

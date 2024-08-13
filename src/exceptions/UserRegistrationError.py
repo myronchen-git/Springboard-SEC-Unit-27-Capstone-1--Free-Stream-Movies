@@ -1,4 +1,4 @@
-from exceptions.base_exceptions import FreeStreamMoviesClientError
+from src.exceptions.base_exceptions import FreeStreamMoviesClientError
 
 
 class UserRegistrationError(FreeStreamMoviesClientError):

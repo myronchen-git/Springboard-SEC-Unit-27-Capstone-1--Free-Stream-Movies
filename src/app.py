@@ -1,3 +1,13 @@
+import sys
+from os.path import abspath, dirname, join
+
+# Adds root folder as a working directory.
+# This is needed so that imports can be found.
+root_dir = abspath(join(dirname(__file__), '../'))  # nopep8
+sys.path.append(root_dir)  # nopep8
+
+# --------------------------------------------------
+
 import os
 
 import flask_login
@@ -7,16 +17,16 @@ from flask import Flask, flash, redirect, render_template, request, url_for
 from flask_debugtoolbar import DebugToolbarExtension
 from flask_login import LoginManager, login_user
 
-from adapters.streaming_availability_adapter import (
+from src.adapters.streaming_availability_adapter import (
     convert_show_json_into_movie_object, store_movie_and_streaming_options)
-from exceptions.UserRegistrationError import UserRegistrationError
-from forms.user_forms import LoginUserForm, RegisterUserForm
-from models.common import connect_db, db
-from models.country_service import CountryService
-from models.movie import Movie
-from models.service import Service
-from models.streaming_option import StreamingOption
-from models.user import User
+from src.exceptions.UserRegistrationError import UserRegistrationError
+from src.forms.user_forms import LoginUserForm, RegisterUserForm
+from src.models.common import connect_db, db
+from src.models.country_service import CountryService
+from src.models.movie import Movie
+from src.models.service import Service
+from src.models.streaming_option import StreamingOption
+from src.models.user import User
 
 # ==================================================
 

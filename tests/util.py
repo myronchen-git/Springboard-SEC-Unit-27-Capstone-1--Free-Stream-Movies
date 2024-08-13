@@ -1,6 +1,6 @@
-from models.movie import Movie
-from models.service import Service
-from models.streaming_option import StreamingOption
+from src.models.movie import Movie
+from src.models.service import Service
+from src.models.streaming_option import StreamingOption
 
 # ==================================================
 

@@ -1,21 +1,20 @@
 import sys
 from os.path import abspath, dirname, join
 
-# Adds src folder as a working directory.
+# Adds root folder as a working directory.
 # This is needed so that imports can be found.
-src_dir = abspath(join(dirname(__file__), '../../src'))  # nopep8
-sys.path.append(src_dir)  # nopep8
+root_dir = abspath(join(dirname(__file__), '../../'))  # nopep8
+sys.path.append(root_dir)  # nopep8
 
 # --------------------------------------------------
 
 from unittest import TestCase
 
-from app import create_app
-from models.common import connect_db, db
-from models.streaming_option import StreamingOption
-
-from ..util import (movie_generator, service_generator,
-                    streaming_option_generator)
+from src.app import create_app
+from src.models.common import connect_db, db
+from src.models.streaming_option import StreamingOption
+from tests.util import (movie_generator, service_generator,
+                        streaming_option_generator)
 
 # ==================================================
 

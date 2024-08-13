@@ -1,15 +1,25 @@
+import sys
+from os.path import abspath, dirname, join
+
+# Adds root folder as a working directory.
+# This is needed so that imports can be found.
+root_dir = abspath(join(dirname(__file__), '../'))  # nopep8
+sys.path.append(root_dir)  # nopep8
+
+# --------------------------------------------------
+
 import time
 
 import requests
 
-from app import RAPID_API_KEY, create_app
-from models.common import connect_db, db
-from models.country_service import CountryService
-from models.movie import Movie
-from models.service import Service
-from models.streaming_option import StreamingOption
-from util.file_handling import read_services_blacklist
-from util.logger import create_logger
+from src.app import RAPID_API_KEY, create_app
+from src.models.common import connect_db, db
+from src.models.country_service import CountryService
+from src.models.movie import Movie
+from src.models.service import Service
+from src.models.streaming_option import StreamingOption
+from src.util.file_handling import read_services_blacklist
+from src.util.logger import create_logger
 
 # ==================================================
 

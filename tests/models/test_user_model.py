@@ -1,10 +1,10 @@
 import sys
 from os.path import abspath, dirname, join
 
-# Adds src folder as a working directory.
+# Adds root folder as a working directory.
 # This is needed so that imports can be found.
-src_dir = abspath(join(dirname(__file__), '../../src'))  # nopep8
-sys.path.append(src_dir)  # nopep8
+root_dir = abspath(join(dirname(__file__), '../../'))  # nopep8
+sys.path.append(root_dir)  # nopep8
 
 # --------------------------------------------------
 
@@ -13,10 +13,10 @@ from unittest import TestCase
 
 from sqlalchemy.exc import IntegrityError
 
-from app import create_app
-from exceptions.UserRegistrationError import UserRegistrationError
-from models.common import connect_db, db
-from models.user import User
+from src.app import create_app
+from src.exceptions.UserRegistrationError import UserRegistrationError
+from src.models.common import connect_db, db
+from src.models.user import User
 
 # ==================================================
 

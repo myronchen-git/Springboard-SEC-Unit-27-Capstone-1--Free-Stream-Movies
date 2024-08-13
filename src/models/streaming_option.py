@@ -2,8 +2,8 @@ import json
 
 from flask_sqlalchemy.pagination import Pagination
 
-from models.common import db
-from models.movie import Movie
+from src.models.common import db
+from src.models.movie import Movie
 
 # ==================================================
 
