@@ -65,14 +65,20 @@ def create_app(db_name, testing=False):
         )
 
     # --------------------------------------------------
-    # users
+    #
     # --------------------------------------------------
 
     @app.route('/')
     def home():
         """Render homepage."""
 
-        return render_template('base.html')
+        services = db.session.query(Service).all()
+
+        return render_template('movies/home.html', services=services)
+
+    # --------------------------------------------------
+    # users
+    # --------------------------------------------------
 
     @app.route("/users/registration", methods=["GET", "POST"])
     def register_user():

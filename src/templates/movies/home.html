@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+<!---->
+{% block title %}Home{% endblock %}
+<!---->
+{% block content %}
+  {% for service in services %}
+  <section id="section-{{ service.id }}" class="section-service">
+    <div class="section-service__div-logo">
+      {% if theme == 'dark' %}
+      <img src="{{ service.dark_theme_image }}" alt="service.name" height="72" />
+      {% else %}
+      <img src="{{ service.light_theme_image }}" alt="service.name" height="72" />
+      {% endif %}
+    </div>
+    <div class="section-service__div-movies" data-service="{{ service.id }}">
+      <i class="bi bi-arrow-left-circle-fill bi-arrow--hidden"></i>
+      <ul class="section-service__list-movies">
+        <li>
+          Loading Movies...
+        </li>
+      </ul>
+      <i class="bi bi-arrow-right-circle-fill bi-arrow--hidden"></i>
+    </div>
+  </section>
+  {% endfor %}
+{% endblock %}
+<!---->
+{% block scripts %}
+<script src="/static/movies/home.js" defer></script>
+{% endblock %}
