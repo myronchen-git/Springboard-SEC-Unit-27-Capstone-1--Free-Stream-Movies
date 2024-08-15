@@ -5,6 +5,13 @@ $(document).ready(() => {
     const countryCode = cookie["countryCode"] || "us";
 
     getMoviesFromAllServices(countryCode);
+
+    $(".section-service__div-movies").on(
+        "click",
+        ".bi-arrow-left-circle-fill, .bi-arrow-right-circle-fill",
+        { countryCode },
+        loadServiceMoviesPage
+    );
 });
 
 // ==================================================
@@ -92,4 +99,27 @@ function buildMoviesDiv(element, moviePageData) {
     } else {
         $serviceMoviesUlElement.append("<li>Error</li>");
     }
+}
+
+/**
+ * Loads the previous or next page of movies for a streaming service's list on the homepage.
+ *
+ * @param {Event} event The Event for clicking on an arrow in a streaming service's list of movies.
+ */
+async function loadServiceMoviesPage(event) {
+    const delegateTarget = event.delegateTarget;
+    const arrow = event.target;
+    const currentPage = parseInt(delegateTarget.dataset.page);
+    const serviceId = delegateTarget.dataset.service;
+    const countryCode = event.data.countryCode;
+
+    let pageToLoad;
+    if (arrow.classList.contains("bi-arrow-left-circle-fill")) {
+        pageToLoad = currentPage - 1;
+    } else if (arrow.classList.contains("bi-arrow-right-circle-fill")) {
+        pageToLoad = currentPage + 1;
+    }
+
+    const moviePageData = await getPageOfMoviesFromService(countryCode, serviceId, pageToLoad);
+    buildMoviesDiv(delegateTarget, moviePageData);
 }

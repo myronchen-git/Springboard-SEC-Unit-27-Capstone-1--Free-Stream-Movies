@@ -449,6 +449,76 @@ describe("buildMoviesDiv", () => {
     });
 });
 
+describe("loadServiceMoviesPage", () => {
+    beforeEach(() => {
+        this.testMoviePageData = { data: "test" };
+
+        this.getPageOfMoviesFromServiceSpy = spyOn(
+            window,
+            "getPageOfMoviesFromService"
+        ).and.returnValue(this.testMoviePageData);
+        this.buildMoviesDivSpy = spyOn(window, "buildMoviesDiv");
+    });
+
+    it("should load the previous page when the event contains the left arrow.", async () => {
+        // Arrange
+        const countryCode = "us";
+        const serviceId = "tubi";
+        const page = 9;
+        const expectedPageToLoad = page - 1;
+
+        const moviesListDiv = $("<div>").attr("data-service", serviceId).attr("data-page", page)[0];
+        const arrowElement = $("<i>").addClass("bi-arrow-left-circle-fill")[0];
+
+        const event = jQuery.Event("click", {
+            delegateTarget: moviesListDiv,
+            target: arrowElement,
+            data: { countryCode },
+        });
+
+        // Act
+        await loadServiceMoviesPage(event);
+
+        // Assert
+        expect(this.getPageOfMoviesFromServiceSpy).toHaveBeenCalledWith(
+            countryCode,
+            serviceId,
+            expectedPageToLoad
+        );
+        expect(this.buildMoviesDivSpy).toHaveBeenCalledWith(moviesListDiv, this.testMoviePageData);
+    });
+
+    it("should load the next page when the event contains the right arrow.", async () => {
+        // Arrange
+        const countryCode = "us";
+        const serviceId = "tubi";
+        const page = 9;
+        const expectedPageToLoad = page + 1;
+
+        const moviesListDiv = $("<div>").attr("data-service", serviceId).attr("data-page", page)[0];
+        const arrowElement = $("<i>").addClass("bi-arrow-right-circle-fill")[0];
+
+        const event = jQuery.Event("click", {
+            delegateTarget: moviesListDiv,
+            target: arrowElement,
+            data: { countryCode },
+        });
+
+        // Act
+        await loadServiceMoviesPage(event);
+
+        // Assert
+        expect(this.getPageOfMoviesFromServiceSpy).toHaveBeenCalledWith(
+            countryCode,
+            serviceId,
+            expectedPageToLoad
+        );
+        expect(this.buildMoviesDivSpy).toHaveBeenCalledWith(moviesListDiv, this.testMoviePageData);
+    });
+});
+
+// ==================================================
+
 /**
  * Creates the div HTML element with class "section-service__div-movies".
  * This needs to be manually updated when there are changes to HTML!
