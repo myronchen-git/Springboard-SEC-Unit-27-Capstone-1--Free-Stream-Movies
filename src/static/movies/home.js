@@ -2,7 +2,9 @@
 
 $(document).ready(() => {
     const cookie = parseCookie(document.cookie);
-    getMoviesFromAllServices(cookie["countryCode"] || "us");
+    const countryCode = cookie["countryCode"] || "us";
+
+    getMoviesFromAllServices(countryCode);
 });
 
 // ==================================================
@@ -64,7 +66,7 @@ function buildMoviesDiv(element, moviePageData) {
     $serviceMoviesUlElement.empty();
 
     if (moviePageData) {
-        $(element).data("page", moviePageData["page"]);
+        $(element).attr("data-page", moviePageData["page"]);
 
         if (moviePageData["has_prev"]) {
             $(element).children(".bi-arrow-left-circle-fill").removeClass("bi-arrow--hidden");

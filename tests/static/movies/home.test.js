@@ -288,7 +288,8 @@ describe("buildMoviesDiv", () => {
         buildMoviesDiv(element, moviePageData);
 
         // Assert
-        expect($(element).data("page")).toBe(moviePageData["page"]);
+        const page = parseInt($(element).attr("data-page"));
+        expect(page).toBe(moviePageData["page"]);
         expect(
             $(element).children(".bi-arrow-left-circle-fill").hasClass("bi-arrow--hidden")
         ).toBeTrue();
@@ -321,7 +322,8 @@ describe("buildMoviesDiv", () => {
         buildMoviesDiv(element, moviePageData);
 
         // Assert
-        expect($(element).data("page")).toBe(moviePageData["page"]);
+        const page = parseInt($(element).attr("data-page"));
+        expect(page).toBe(moviePageData["page"]);
         expect(
             $(element).children(".bi-arrow-left-circle-fill").hasClass("bi-arrow--hidden")
         ).toBeFalse();
@@ -423,7 +425,8 @@ describe("buildMoviesDiv", () => {
         buildMoviesDiv(element, moviePageData);
 
         // Assert
-        expect($(element).data("page")).toBe(moviePageData["page"]);
+        const page = parseInt($(element).attr("data-page"));
+        expect(page).toBe(moviePageData["page"]);
         expect(
             $(element).children(".bi-arrow-left-circle-fill").hasClass("bi-arrow--hidden")
         ).toBeTrue();
