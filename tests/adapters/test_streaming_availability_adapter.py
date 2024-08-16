@@ -15,7 +15,7 @@ from src.adapters.streaming_availability_adapter import \
 from src.app import create_app
 from src.models.common import connect_db, db
 from src.models.movie import Movie
-from src.models.movie_posters import MoviePoster
+from src.models.movie_poster import MoviePoster
 from src.models.streaming_option import StreamingOption
 from tests.util import service_generator
 

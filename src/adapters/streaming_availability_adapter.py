@@ -2,7 +2,7 @@ from pathlib import Path
 
 from src.models.common import db
 from src.models.movie import Movie
-from src.models.movie_posters import MoviePoster
+from src.models.movie_poster import MoviePoster
 from src.models.streaming_option import StreamingOption
 from src.util.file_handling import read_services_blacklist
 from src.util.logger import create_logger
