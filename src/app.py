@@ -140,15 +140,15 @@ def create_app(db_name, testing=False):
     # api
     # --------------------------------------------------
 
-    @app.route('/api/v1/<country_code>/<service>/movies')
-    def get_streaming_options(country_code, service):
+    @app.route('/api/v1/<country_code>/<service_id>/movies')
+    def get_streaming_options(country_code, service_id):
         """Retrieves a list of movie streaming options for a specified country and streaming service."""
 
         page = request.args.get('page')
         page = int(page) if page else None
 
         movies_pagination = StreamingOption.get_streaming_options(
-            country_code, service, page)
+            country_code, service_id, page)
 
         items = [item.toJson() for item in movies_pagination.items]
 

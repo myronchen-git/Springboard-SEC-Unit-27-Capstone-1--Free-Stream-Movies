@@ -67,7 +67,7 @@ class StreamingOptionApiTestCase(TestCase):
         url = url_for(
             "get_streaming_options",
             country_code=StreamingOptionApiTestCase.COUNTRY_CODE,
-            service=StreamingOptionApiTestCase.SERVICE_ID
+            service_id=StreamingOptionApiTestCase.SERVICE_ID
         )
 
         streaming_options = streaming_option_generator(
@@ -105,7 +105,7 @@ class StreamingOptionApiTestCase(TestCase):
         url = url_for(
             "get_streaming_options",
             country_code=StreamingOptionApiTestCase.COUNTRY_CODE,
-            service=StreamingOptionApiTestCase.SERVICE_ID
+            service_id=StreamingOptionApiTestCase.SERVICE_ID
         )
 
         streaming_options = streaming_option_generator(
