@@ -21,15 +21,18 @@ class StreamingOption(db.Model):
     movie_id = db.Column(
         db.Text,
         db.ForeignKey('movies.id', ondelete='CASCADE'),
+        nullable=False
     )
 
     country_code = db.Column(
         db.String(2),
+        nullable=False
     )
 
     service_id = db.Column(
         db.Text,
         db.ForeignKey('services.id', ondelete='CASCADE'),
+        nullable=False
     )
 
     link = db.Column(
