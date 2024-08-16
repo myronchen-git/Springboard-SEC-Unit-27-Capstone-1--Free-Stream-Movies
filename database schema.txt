@@ -36,7 +36,7 @@ Table posters {
   movie_id text [primary key, ref: > movies.id]
   type text [primary key]
   size string(4) [primary key]
-  link text
+  link text [not null]
 }
 
 Table streaming_options {
