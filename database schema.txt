@@ -1,0 +1,57 @@
+// https://dbdiagram.io/d
+
+// Use DBML to define your database structure
+// Docs: https://dbml.dbdiagram.io/docs
+
+Table services {
+  id text [primary key]
+  name text [not null]
+  home_page text [not null]
+  theme_color_code text [not null]
+  light_theme_image text [not null]
+  dark_theme_image text [not null]
+  white_image text [not null]
+}
+
+Table countries_services {
+  country_code string [primary key]
+  service_id text [primary key, ref: <> services.id]
+}
+
+Table movies {
+  id text [primary key]
+  imdb_id text [not null]
+  tmdb_id text [not null]
+  title text [not null]
+  overview text [not null]
+  release_year integer
+  original_title text [not null]
+  directors array(text)
+  cast array(text) [not null]
+  rating integer [not null]
+  runtime integer
+}
+
+Table posters {
+  movie_id text [primary key, ref: > movies.id]
+  type text [primary key]
+  size string(4) [primary key]
+  link text
+}
+
+Table streaming_options {
+  id integer [primary key]
+  movie_id text [not null, ref: > movies.id]
+  country_code string(2) [not null]
+  service_id text [not null, ref: > services.id]
+  link text [not null]
+  expires_soon boolean [not null]
+  expires_on bigint
+}
+
+Table users {
+  id integer [primary key]
+  username text [not null, unique]
+  password text [not null]
+  email text [not null, unique]
+}
