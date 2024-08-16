@@ -2,6 +2,7 @@ from pathlib import Path
 
 from src.models.common import db
 from src.models.movie import Movie
+from src.models.movie_posters import MoviePoster
 from src.models.streaming_option import StreamingOption
 from src.util.file_handling import read_services_blacklist
 from src.util.logger import create_logger
@@ -101,7 +102,35 @@ def store_movie_and_streaming_options(show: dict) -> None:
 
     movie = convert_show_json_into_movie_object(show)
     logger.info(f'Adding Movie {movie.id} ({movie.title}) to session.')
-    db.session.add(movie)
+
+    movie_posters = convert_image_set_json_into_movie_poster_objects(show['imageSet'], show['id'])
+    logger.info(f'Adding {len(movie_posters)} posters from Movie {show['id']} ({show['title']}) to session.')
+
+    db.session.add_all([movie, *movie_posters])
     db.session.commit()
 
     store_streaming_options(show['streamingOptions'], show['id'])
+
+
+def convert_image_set_json_into_movie_poster_objects(image_set: dict, movie_id: str) -> list[MoviePoster]:
+    """
+    Converts Streaming Availability's Show object's image set of movie posters into MoviePoster objects.
+    Currently, this just takes the vertical posters.
+
+    @param {dict} image_set - The JSON imageSet object within a Show object from Streaming Availability.
+    @returns {list[MoviePoster]} A list of MoviePosters.
+    """
+
+    poster_type = 'verticalPoster'
+    movie_posters = []
+
+    for poster_size, link in image_set[poster_type].items():
+        movie_posters.append(
+            MoviePoster(
+                movie_id=movie_id,
+                type=poster_type,
+                size=poster_size,
+                link=link
+            ))
+
+    return movie_posters

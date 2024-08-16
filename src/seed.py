@@ -12,6 +12,8 @@ import time
 
 import requests
 
+from src.adapters.streaming_availability_adapter import \
+    convert_image_set_json_into_movie_poster_objects
 from src.app import RAPID_API_KEY, create_app
 from src.models.common import connect_db, db
 from src.models.country_service import CountryService
@@ -127,6 +129,11 @@ def seed_movies_and_streams_from_one_request(country: str, service_id: str, curs
             logger.info(f'Adding Movie {show['id']} ({show['title']}) '
                         f'to session.')
             db.session.add(m)
+
+            # adding movie posters
+            movie_posters = convert_image_set_json_into_movie_poster_objects(show['imageSet'], show['id'])
+            logger.info(f'Adding {len(movie_posters)} posters from Movie {show['id']} ({show['title']}) to session.')
+            db.session.add_all(movie_posters)
 
             for country_code, streaming_options in show['streamingOptions'].items():
                 for streaming_option in streaming_options:

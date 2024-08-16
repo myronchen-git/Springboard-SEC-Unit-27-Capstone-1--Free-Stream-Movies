@@ -15,6 +15,7 @@ from src.adapters.streaming_availability_adapter import \
 from src.app import create_app
 from src.models.common import connect_db, db
 from src.models.movie import Movie
+from src.models.movie_posters import MoviePoster
 from src.models.streaming_option import StreamingOption
 from tests.util import service_generator
 
@@ -86,6 +87,13 @@ class StreamingAvailabilityTestCase(TestCase):
                 }]
         }
 
+        image_set_json = {
+            "verticalPoster": {
+                "w240": "example.com/w240",
+                "w360": "example.com/w360"
+            }
+        }
+
         show_json = {
             "id": movie_id,
             "imdbId": "tt0468569",
@@ -97,6 +105,7 @@ class StreamingAvailabilityTestCase(TestCase):
             "cast": ["person1", "person2"],
             "rating": 87,
             "runtime": 152,
+            "imageSet": image_set_json,
             "streamingOptions": streaming_options_json
         }
 
@@ -107,6 +116,16 @@ class StreamingAvailabilityTestCase(TestCase):
         movies = db.session.query(Movie).all()
         self.assertEqual(len(movies), 1)
         self.assertEqual(movies[0].id, movie_id)
+
+        movie_posters = db.session.query(MoviePoster).all()
+        self.assertEqual(len(movie_posters), 2)
+        for movie_poster in movie_posters:
+            self.assertEqual(movie_poster.movie_id, movie_id)
+            self.assertEqual(movie_poster.type, "verticalPoster")
+        self.assertEqual(movie_posters[0].size, "w240")
+        self.assertEqual(movie_posters[0].link, "example.com/w240")
+        self.assertEqual(movie_posters[1].size, "w360")
+        self.assertEqual(movie_posters[1].link, "example.com/w360")
 
         streaming_options = db.session.query(StreamingOption).all()
         self.assertEqual(len(streaming_options), 4)
