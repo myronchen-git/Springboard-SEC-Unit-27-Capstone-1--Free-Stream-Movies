@@ -32,6 +32,8 @@ from src.models.user import User
 
 load_dotenv()
 RAPID_API_KEY = os.environ.get('RAPID_API_KEY')
+STREAMING_AVAILABILITY_BASE_URL = "https://streaming-availability.p.rapidapi.com"
+
 DEFAULT_COUNTRY_CODE = 'us'
 
 # --------------------------------------------------
@@ -173,7 +175,7 @@ def create_app(db_name, testing=False):
         if not country or not title:
             return redirect(url_for("home"))
 
-        url = "https://streaming-availability.p.rapidapi.com/shows/search/title"
+        url = f"{STREAMING_AVAILABILITY_BASE_URL}/shows/search/title"
         headers = {'X-RapidAPI-Key': RAPID_API_KEY}
         querystring = {"country": country,
                        "title": title,
@@ -197,7 +199,7 @@ def create_app(db_name, testing=False):
         movie = db.session.get(Movie, movie_id)
 
         if not movie:
-            url = f"https://streaming-availability.p.rapidapi.com/shows/{movie_id}"
+            url = f"{STREAMING_AVAILABILITY_BASE_URL}/shows/{movie_id}"
             headers = {'X-RapidAPI-Key': RAPID_API_KEY}
 
             resp = requests.get(url, headers=headers)
