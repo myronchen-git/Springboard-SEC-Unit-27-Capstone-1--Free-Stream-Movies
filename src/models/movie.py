@@ -63,7 +63,12 @@ class Movie(db.Model):
     )
 
     streaming_options = db.relationship(
-        'StreamingOption', back_populates='movie', cascade='all, delete-orphan')
+        'StreamingOption', back_populates='movie', cascade='all, delete-orphan'
+    )
+
+    movie_posters = db.relationship(
+        'MoviePoster', back_populates='movie', cascade='all, delete-orphan'
+    )
 
     def __repr__(self) -> str:
         """Show info about movie."""
