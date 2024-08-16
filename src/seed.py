@@ -12,14 +12,13 @@ import time
 
 import requests
 
-from src.adapters.streaming_availability_adapter import \
-    convert_image_set_json_into_movie_poster_objects
+from src.adapters.streaming_availability_adapter import (
+    convert_image_set_json_into_movie_poster_objects,
+    convert_show_json_into_movie_object, store_movie_and_streaming_options)
 from src.app import RAPID_API_KEY, create_app
 from src.models.common import connect_db, db
 from src.models.country_service import CountryService
-from src.models.movie import Movie
 from src.models.service import Service
-from src.models.streaming_option import StreamingOption
 from src.util.file_handling import read_services_blacklist
 from src.util.logger import create_logger
 
@@ -111,24 +110,13 @@ def seed_movies_and_streams_from_one_request(country: str, service_id: str, curs
         body = resp.json()
 
         for show in body['shows']:
-            m = Movie(
-                id=show['id'],
-                imdb_id=show['imdbId'],
-                tmdb_id=show['tmdbId'],
-                title=show['title'],
-                overview=show['overview'],
-                release_year=show.get('releaseYear'),
-                original_title=show['originalTitle'],
-                directors=show.get('directors'),
-                cast=show['cast'],
-                rating=show['rating'],
-                runtime=show.get('runtime')
-            )
-            logger.debug(f'Movie = {m}.')
-
+            """
+            # adding movie
+            movie = convert_show_json_into_movie_object(show)
+            logger.debug(f'Movie = {movie}.')
             logger.info(f'Adding Movie {show['id']} ({show['title']}) '
                         f'to session.')
-            db.session.add(m)
+            db.session.add(movie)
 
             # adding movie posters
             movie_posters = convert_image_set_json_into_movie_poster_objects(show['imageSet'], show['id'])
@@ -159,6 +147,9 @@ def seed_movies_and_streams_from_one_request(country: str, service_id: str, curs
 
         logger.debug('Committing movies and streaming options.')
         db.session.commit()
+        """
+
+            store_movie_and_streaming_options(show)
 
         if body['hasMore']:
             logger.info(f'Response has more results.  '

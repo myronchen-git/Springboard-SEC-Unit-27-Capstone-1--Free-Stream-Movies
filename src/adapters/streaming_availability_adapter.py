@@ -25,7 +25,7 @@ def convert_show_json_into_movie_object(show: dict) -> Movie:
     @returns {Movie} Movie object.
     """
 
-    return Movie(
+    movie = Movie(
         id=show['id'],
         imdb_id=show['imdbId'],
         tmdb_id=show['tmdbId'],
@@ -38,6 +38,9 @@ def convert_show_json_into_movie_object(show: dict) -> Movie:
         rating=show['rating'],
         runtime=show.get('runtime')
     )
+
+    logger.debug(f'Movie = {movie}.')
+    return movie
 
 
 def convert_streaming_option_json_into_object(
@@ -57,7 +60,7 @@ def convert_streaming_option_json_into_object(
     if streaming_option['type'] == 'free' \
             and streaming_option['service']['id'].lower() not in BLACKLISTED_SERVICES:
 
-        return StreamingOption(
+        streaming_option = StreamingOption(
             movie_id=movie_id,
             country_code=country_code,
             service_id=streaming_option['service']['id'],
@@ -65,6 +68,9 @@ def convert_streaming_option_json_into_object(
             expires_soon=streaming_option['expiresSoon'],
             expires_on=streaming_option.get('expiresOn')
         )
+
+        logger.debug(f'StreamingOption = {streaming_option}.')
+        return streaming_option
 
 
 def store_streaming_options(streaming_options: dict, movie_id: str) -> None:
