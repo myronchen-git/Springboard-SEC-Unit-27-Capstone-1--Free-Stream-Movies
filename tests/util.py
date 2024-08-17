@@ -39,7 +39,7 @@ def movie_generator(n: int) -> list[Movie]:
     for i in range(n):
         output.append(
             Movie(
-                id=i,
+                id=str(i),
                 imdb_id=f"tt04685{i:02d}",
                 tmdb_id=f"movie/1{i:02d}",
                 title=f"Movie {i:02d}",
