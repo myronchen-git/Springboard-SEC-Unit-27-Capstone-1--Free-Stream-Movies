@@ -74,7 +74,13 @@ def create_app(db_name, testing=False):
     def home():
         """Render homepage."""
 
-        services = db.session.query(Service).all()
+        country_code = request.cookies.get('country_code', DEFAULT_COUNTRY_CODE)
+
+        services = db.session\
+            .query(Service)\
+            .join(CountryService, Service.id == CountryService.service_id)\
+            .filter(CountryService.country_code == country_code)\
+            .all()
 
         return render_template('movies/home.html', services=services)
 
