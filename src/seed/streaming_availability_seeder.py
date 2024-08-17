@@ -12,9 +12,8 @@ import time
 
 import requests
 
-from src.adapters.streaming_availability_adapter import (
-    convert_image_set_json_into_movie_poster_objects,
-    convert_show_json_into_movie_object, store_movie_and_streaming_options)
+from src.adapters.streaming_availability_adapter import \
+    store_movie_and_streaming_options
 from src.app import RAPID_API_KEY, create_app
 from src.models.common import connect_db, db
 from src.models.country_service import CountryService
@@ -38,19 +37,24 @@ def seed_services() -> None:
     See https://docs.movieofthenight.com/resource/countries#get-all-countries
     """
 
+    # set up variables
     url = "https://streaming-availability.p.rapidapi.com/countries"
     headers = {'X-RapidAPI-Key': RAPID_API_KEY}
 
+    # call API
     resp = requests.get(url, headers=headers)
 
     if resp.status_code == 200:
         added_services = set()
 
+        # storing data for each service
         for country_code, country_data in resp.json().items():
             for service in country_data['services']:
                 service_id = service['id']
 
+                # only services that have free movies and not those that are incorrectly labeled as free
                 if service['streamingOptionTypes']['free'] and service_id.lower() not in BLACKLISTED_SERVICES:
+                    # creating Service Object
                     s = Service(
                         id=service_id,
                         name=service['name'],
@@ -62,21 +66,26 @@ def seed_services() -> None:
                     )
                     logger.debug(f'Service = {s}.')
 
+                    # creating CountryService Object
                     cs = CountryService(
                         country_code=country_code,
                         service_id=service_id
                     )
                     logger.debug(f'CountryService = {cs}.')
 
+                    # adding Service to session while prevent duplicate service data,
+                    # which will happen because countries will have the same services
                     if service_id not in added_services:
                         logger.info(f'Adding {service_id} to session.')
                         db.session.add(s)
                         added_services.add(service_id)
 
+                    # adding CountryService to session
                     logger.info(
                         f'Adding {country_code}-{service['id']} to session.')
                     db.session.add(cs)
 
+        # finally committing the data, all at once, to avoid multiple writes to database
         logger.debug('Committing services and countries-services.')
         db.session.commit()
 
@@ -95,6 +104,7 @@ def seed_movies_and_streams_from_one_request(country: str, service_id: str, curs
     See https://docs.movieofthenight.com/resource/shows#search-shows-by-filters
     """
 
+    # set up variables
     url = "https://streaming-availability.p.rapidapi.com/shows/search/filters"
     headers = {'X-RapidAPI-Key': RAPID_API_KEY}
     querystring = {"country": country,
@@ -104,53 +114,17 @@ def seed_movies_and_streams_from_one_request(country: str, service_id: str, curs
     if cursor:
         querystring['cursor'] = cursor
 
+    # call API
     resp = requests.get(url, headers=headers, params=querystring)
 
     if resp.status_code == 200:
         body = resp.json()
 
+        # store data
         for show in body['shows']:
-            """
-            # adding movie
-            movie = convert_show_json_into_movie_object(show)
-            logger.debug(f'Movie = {movie}.')
-            logger.info(f'Adding Movie {show['id']} ({show['title']}) '
-                        f'to session.')
-            db.session.add(movie)
-
-            # adding movie posters
-            movie_posters = convert_image_set_json_into_movie_poster_objects(show['imageSet'], show['id'])
-            logger.info(f'Adding {len(movie_posters)} posters from Movie {show['id']} ({show['title']}) to session.')
-            db.session.add_all(movie_posters)
-
-            for country_code, streaming_options in show['streamingOptions'].items():
-                for streaming_option in streaming_options:
-                    if streaming_option['type'] == 'free' \
-                            and streaming_option['service']['id'].lower() not in BLACKLISTED_SERVICES:
-
-                        so = StreamingOption(
-                            movie_id=show['id'],
-                            country_code=country_code,
-                            service_id=streaming_option['service']['id'],
-                            link=streaming_option['link'],
-                            expires_soon=streaming_option['expiresSoon'],
-                            expires_on=streaming_option.get('expiresOn')
-                        )
-                        logger.debug(f'StreamingOption = {so}.')
-
-                        logger.info(f'Adding {show['id']}-'
-                                    f'{country_code}-'
-                                    f'{streaming_option['service']['id']} '
-                                    f'({show['title']}) '
-                                    f'streaming option to session.')
-                        db.session.add(so)
-
-        logger.debug('Committing movies and streaming options.')
-        db.session.commit()
-        """
-
             store_movie_and_streaming_options(show)
 
+        # if there's another page of data, return next starting point
         if body['hasMore']:
             logger.info(f'Response has more results.  '
                         f'Next cursor is "{body['nextCursor']}".')
@@ -167,8 +141,10 @@ def seed_movies_and_streams() -> None:
     for all countries and free streaming services.
     """
 
+    # retrieve all countries and services
     # countries_services = db.session.query(CountryService).all()
-    # temp
+
+    # during development, temporarily get data for US and Tubi instead of all
     countries_services = db.session.query(
         CountryService).filter_by(country_code='us', service_id='tubi').all()
 
@@ -177,8 +153,8 @@ def seed_movies_and_streams() -> None:
                     f'{country_service.country_code} and {country_service.service_id}.')
         cursor = None
 
+        # repeat requests due to Streaming Availability API rate limit
         while True:
-            # iterations needed due to Streaming Availability API request rate limit per second
             for i in range(10):
                 cursor = seed_movies_and_streams_from_one_request(
                     country_service.country_code, country_service.service_id, cursor)
