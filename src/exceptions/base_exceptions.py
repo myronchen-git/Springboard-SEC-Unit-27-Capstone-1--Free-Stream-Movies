@@ -1,10 +1,12 @@
 class FreeStreamMoviesClientError(Exception):
     """Represents an error caused by the client."""
 
-    pass
+    def __init__(self, message):
+        super().__init__(message)
 
 
 class FreeStreamMoviesServerError(Exception):
     """Represents an error caused by the server."""
 
-    pass
+    def __init__(self, message):
+        super().__init__(message)
