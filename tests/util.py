@@ -1,4 +1,5 @@
 from src.models.movie import Movie
+from src.models.movie_poster import MoviePoster
 from src.models.service import Service
 from src.models.streaming_option import StreamingOption
 
@@ -51,6 +52,26 @@ def movie_generator(n: int) -> list[Movie]:
                 rating=i,
                 runtime=120
             ))
+
+    return output
+
+
+def movie_poster_generator(movie_ids: list[str]) -> list[MoviePoster]:
+    """Creates MoviePosters from list of IDs, for all types and sizes, and returns them in a List."""
+
+    output = []
+
+    for movie_id in movie_ids:
+        for type in MoviePoster.Types:
+            for size in MoviePoster.VerticalSizes:
+                output.append(
+                    MoviePoster(
+                        movie_id=movie_id,
+                        type=type,
+                        size=size,
+                        link=f'www.example.com/{movie_id}/{type}/{size}'
+                    )
+                )
 
     return output
 
