@@ -10,7 +10,7 @@ $(document).ready(() => {
         "click",
         ".bi-arrow-left-circle-fill, .bi-arrow-right-circle-fill",
         { countryCode },
-        loadServiceMoviesPage
+        handleServiceMoviesPageChange
     );
 });
 
@@ -106,7 +106,7 @@ function buildMoviesDiv(element, moviePageData) {
  *
  * @param {Event} event The Event for clicking on an arrow in a streaming service's list of movies.
  */
-async function loadServiceMoviesPage(event) {
+async function handleServiceMoviesPageChange(event) {
     const delegateTarget = event.delegateTarget;
     const arrow = event.target;
     const currentPage = parseInt(delegateTarget.dataset.page);

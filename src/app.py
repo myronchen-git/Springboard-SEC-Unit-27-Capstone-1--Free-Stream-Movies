@@ -85,7 +85,7 @@ def create_app(db_name, testing=False):
             .filter(CountryService.country_code == country_code)\
             .all()
 
-        return render_template('movies/home.html', services=services)
+        return render_template('home.html', services=services)
 
     # --------------------------------------------------
     # users

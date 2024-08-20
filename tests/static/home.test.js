@@ -449,7 +449,7 @@ describe("buildMoviesDiv", () => {
     });
 });
 
-describe("loadServiceMoviesPage", () => {
+describe("handleServiceMoviesPageChange", () => {
     beforeEach(() => {
         this.testMoviePageData = { data: "test" };
 
@@ -477,7 +477,7 @@ describe("loadServiceMoviesPage", () => {
         });
 
         // Act
-        await loadServiceMoviesPage(event);
+        await handleServiceMoviesPageChange(event);
 
         // Assert
         expect(this.getPageOfMoviesFromServiceSpy).toHaveBeenCalledWith(
@@ -505,7 +505,7 @@ describe("loadServiceMoviesPage", () => {
         });
 
         // Act
-        await loadServiceMoviesPage(event);
+        await handleServiceMoviesPageChange(event);
 
         // Assert
         expect(this.getPageOfMoviesFromServiceSpy).toHaveBeenCalledWith(
