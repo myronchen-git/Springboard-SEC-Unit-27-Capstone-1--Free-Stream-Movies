@@ -17,8 +17,8 @@ from src.models.common import connect_db, db
 from src.models.movie import Movie
 from src.models.service import Service
 from src.models.streaming_option import StreamingOption
-from tests.util import (movie_generator, service_generator,
-                        streaming_option_generator)
+from tests.utility_functions import (movie_generator, service_generator,
+                                     streaming_option_generator)
 
 # ==================================================
 

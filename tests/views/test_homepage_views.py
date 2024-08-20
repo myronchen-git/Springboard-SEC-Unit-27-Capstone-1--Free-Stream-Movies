@@ -17,7 +17,7 @@ from src.models.common import connect_db, db
 from src.models.country_service import CountryService
 from src.models.movie import Movie
 from src.models.service import Service
-from tests.util import service_generator
+from tests.utility_functions import service_generator
 
 # ==================================================
 

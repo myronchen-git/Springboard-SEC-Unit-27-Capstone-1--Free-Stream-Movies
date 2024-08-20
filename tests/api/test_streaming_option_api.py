@@ -15,8 +15,8 @@ from flask import url_for
 from src.app import create_app
 from src.models.common import connect_db, db
 from src.models.streaming_option import StreamingOption
-from tests.util import (movie_generator, service_generator,
-                        streaming_option_generator)
+from tests.utility_functions import (movie_generator, service_generator,
+                                     streaming_option_generator)
 
 # ==================================================
 
