@@ -19,14 +19,17 @@ from flask_login import LoginManager, login_user
 
 from src.adapters.streaming_availability_adapter import (
     convert_show_json_into_movie_object, store_movie_and_streaming_options)
+from src.exceptions.base_exceptions import FreeStreamMoviesClientError
 from src.exceptions.UserRegistrationError import UserRegistrationError
 from src.forms.user_forms import LoginUserForm, RegisterUserForm
 from src.models.common import connect_db, db
 from src.models.country_service import CountryService
 from src.models.movie import Movie
+from src.models.movie_poster import MoviePoster
 from src.models.service import Service
 from src.models.streaming_option import StreamingOption
 from src.models.user import User
+from src.util.client_input_validations import has_comma_in_query_parameters
 
 # ==================================================
 
@@ -166,6 +169,35 @@ def create_app(db_name, testing=False):
             'has_prev': movies_pagination.has_prev,
             'has_next': movies_pagination.has_next,
         }
+
+    @app.route('/api/v1/movie-posters')
+    def get_movie_posters():
+        """
+        Retrieves a dictionary of movie poster links for specified movies, types, and sizes.
+        Requires query parameters movieId, type, and size.  Query parameters have to be repeated when passing different
+        values (movieId=1234, movieId=5678).
+
+        Returns JSON {movie_id: {type: {size: link}}}.
+        """
+
+        movie_ids = request.args.getlist('movieId')
+        types = request.args.getlist('type')
+        sizes = request.args.getlist('size')
+
+        if not movie_ids or not types or not sizes:
+            return {'message': 'Missing movieId, type, or size query parameters.'}, 400
+
+        if has_comma_in_query_parameters([movie_ids, types, sizes]):
+            return {'message':
+                    'App API does not support comma-separated lists for query parameters '
+                    '(movieId=1234,5678).  Use repeated query parameter assignment '
+                    '(movieId=1234, movieId=5678).'}, 400
+
+        try:
+            movie_posters = MoviePoster.get_movie_posters(movie_ids, types, sizes)
+            return MoviePoster.convert_list_to_dict(movie_posters)
+        except FreeStreamMoviesClientError as e:
+            return {"message": str(e)}, 400
 
     # --------------------------------------------------
     # movies
