@@ -1,8 +1,22 @@
 describe("getMoviesFromAllServices", () => {
     beforeEach(() => {
-        this.testMoviePageData = { data: "test" };
+        this.origMoviePageData = { items: [{ movie_id: "1" }] };
+        this.moviePageData = JSON.parse(JSON.stringify(this.origMoviePageData));
+
+        // get array of IDs from moviePageData to simplify assertions
+        this.moviePageDataIds = Object.freeze(
+            this.moviePageData.items.reduce((arr, streamingOption) => {
+                arr.push(streamingOption.movie_id);
+                return arr;
+            }, [])
+        );
 
         this.buildMoviesDivSpy = spyOn(window, "buildMoviesDiv");
+
+        this.origMoviePosterData = { movie_id: { verticalPoster: { w240: "example.com" } } };
+        window.getMoviePosters = jasmine
+            .createSpy("getMoviePostersSpy")
+            .and.returnValue(JSON.parse(JSON.stringify(this.origMoviePosterData)));
     });
 
     afterEach(() => {
@@ -10,7 +24,7 @@ describe("getMoviesFromAllServices", () => {
     });
 
     it(
-        "should call not getPageOfMoviesFromService or buildMoviesDiv " +
+        "should not call getPageOfMoviesFromService, getMoviePosters, or buildMoviesDiv " +
             "when there are no streaming services.",
         async () => {
             // Arrange
@@ -23,6 +37,7 @@ describe("getMoviesFromAllServices", () => {
 
             // Assert
             expect(getPageOfMoviesFromServiceSpy).not.toHaveBeenCalled();
+            expect(window.getMoviePosters).not.toHaveBeenCalled();
             expect(this.buildMoviesDivSpy).not.toHaveBeenCalled();
         }
     );
@@ -38,10 +53,9 @@ describe("getMoviesFromAllServices", () => {
             const elements = [createTestDivHelper(serviceIds[0])[0]];
             $("#testarea").append(...elements);
 
-            const getPageOfMoviesFromServiceSpy = spyOn(
-                window,
-                "getPageOfMoviesFromService"
-            ).and.returnValue(this.testMoviePageData);
+            const getPageOfMoviesFromServiceSpy = spyOn(window, "getPageOfMoviesFromService").and.returnValue(
+                this.moviePageData
+            );
 
             // Act
             await getMoviesFromAllServices(countryCode);
@@ -49,10 +63,18 @@ describe("getMoviesFromAllServices", () => {
             // Assert
             expect(getPageOfMoviesFromServiceSpy).toHaveBeenCalledTimes(serviceIds.length);
             expect(getPageOfMoviesFromServiceSpy).toHaveBeenCalledWith(countryCode, serviceIds[0]);
+
+            expect(window.getMoviePosters).toHaveBeenCalledWith(
+                this.moviePageDataIds,
+                jasmine.arrayContaining([]),
+                jasmine.arrayContaining([])
+            );
+
             expect(this.buildMoviesDivSpy).toHaveBeenCalledTimes(serviceIds.length);
             expect(this.buildMoviesDivSpy).toHaveBeenCalledWith(
                 elements[0],
-                this.testMoviePageData
+                this.origMoviePageData,
+                this.origMoviePosterData
             );
         }
     );
@@ -64,16 +86,12 @@ describe("getMoviesFromAllServices", () => {
             // Arrange
             const countryCode = "us";
             const serviceIds = ["plutotv", "tubi"];
-            const elements = [
-                createTestDivHelper(serviceIds[0])[0],
-                createTestDivHelper(serviceIds[1])[0],
-            ];
+            const elements = [createTestDivHelper(serviceIds[0])[0], createTestDivHelper(serviceIds[1])[0]];
             $("#testarea").append(...elements);
 
-            const getPageOfMoviesFromServiceSpy = spyOn(
-                window,
-                "getPageOfMoviesFromService"
-            ).and.returnValue(this.testMoviePageData);
+            const getPageOfMoviesFromServiceSpy = spyOn(window, "getPageOfMoviesFromService").and.returnValue(
+                this.moviePageData
+            );
 
             // Act
             await getMoviesFromAllServices(countryCode);
@@ -82,14 +100,23 @@ describe("getMoviesFromAllServices", () => {
             expect(getPageOfMoviesFromServiceSpy).toHaveBeenCalledTimes(serviceIds.length);
             expect(getPageOfMoviesFromServiceSpy).toHaveBeenCalledWith(countryCode, serviceIds[0]);
             expect(getPageOfMoviesFromServiceSpy).toHaveBeenCalledWith(countryCode, serviceIds[1]);
+
+            expect(window.getMoviePosters).toHaveBeenCalledWith(
+                this.moviePageDataIds,
+                jasmine.arrayContaining([]),
+                jasmine.arrayContaining([])
+            );
+
             expect(this.buildMoviesDivSpy).toHaveBeenCalledTimes(serviceIds.length);
             expect(this.buildMoviesDivSpy).toHaveBeenCalledWith(
                 elements[0],
-                this.testMoviePageData
+                this.origMoviePageData,
+                this.origMoviePosterData
             );
             expect(this.buildMoviesDivSpy).toHaveBeenCalledWith(
                 elements[1],
-                this.testMoviePageData
+                this.origMoviePageData,
+                this.origMoviePosterData
             );
         }
     );
@@ -102,10 +129,7 @@ describe("getMoviesFromAllServices", () => {
             // Arrange
             const countryCode = "us";
             const serviceIds = ["plutotv", "tubi"];
-            const elements = [
-                createTestDivHelper(serviceIds[0])[0],
-                createTestDivHelper(serviceIds[1])[0],
-            ];
+            const elements = [createTestDivHelper(serviceIds[0])[0], createTestDivHelper(serviceIds[1])[0]];
             $("#testarea").append(...elements);
 
             const getPageOfMoviesFromServiceSpy = spyOn(window, "getPageOfMoviesFromService");
@@ -117,9 +141,12 @@ describe("getMoviesFromAllServices", () => {
             expect(getPageOfMoviesFromServiceSpy).toHaveBeenCalledTimes(serviceIds.length);
             expect(getPageOfMoviesFromServiceSpy).toHaveBeenCalledWith(countryCode, serviceIds[0]);
             expect(getPageOfMoviesFromServiceSpy).toHaveBeenCalledWith(countryCode, serviceIds[1]);
+
+            expect(window.getMoviePosters).not.toHaveBeenCalled();
+
             expect(this.buildMoviesDivSpy).toHaveBeenCalledTimes(serviceIds.length);
-            expect(this.buildMoviesDivSpy).toHaveBeenCalledWith(elements[0], undefined);
-            expect(this.buildMoviesDivSpy).toHaveBeenCalledWith(elements[1], undefined);
+            expect(this.buildMoviesDivSpy).toHaveBeenCalledWith(elements[0], undefined, undefined);
+            expect(this.buildMoviesDivSpy).toHaveBeenCalledWith(elements[1], undefined, undefined);
         }
     );
 });
@@ -271,6 +298,19 @@ describe("buildMoviesDiv", () => {
             Object.freeze({ id: 1, movie_id: 1, link: "http://www.example.com/1" }),
             Object.freeze({ id: 2, movie_id: 2, link: "http://www.example.com/2" }),
         ]);
+
+        this.expectedMoviePosterLinks = Object.freeze([
+            "http://www.example.com/1/poster",
+            "http://www.example.com/2/poster",
+        ]);
+
+        this.moviePosterData = {};
+        this.moviePosterData[this.items[0].id] = {
+            verticalPoster: { w240: this.expectedMoviePosterLinks[0] },
+        };
+        this.moviePosterData[this.items[1].id] = {
+            verticalPoster: { w240: this.expectedMoviePosterLinks[1] },
+        };
     });
 
     it("should build the elements for the first page and when there is no next page.", () => {
@@ -285,26 +325,24 @@ describe("buildMoviesDiv", () => {
         });
 
         // Act
-        buildMoviesDiv(element, moviePageData);
+        buildMoviesDiv(element, moviePageData, this.moviePosterData);
 
         // Assert
         const page = parseInt($(element).attr("data-page"));
         expect(page).toBe(moviePageData["page"]);
-        expect(
-            $(element).children(".bi-arrow-left-circle-fill").hasClass("bi-arrow--hidden")
-        ).toBeTrue();
-        expect(
-            $(element).children(".bi-arrow-right-circle-fill").hasClass("bi-arrow--hidden")
-        ).toBeTrue();
+        expect($(element).children(".bi-arrow-left-circle-fill").hasClass("bi-arrow--hidden")).toBeTrue();
+        expect($(element).children(".bi-arrow-right-circle-fill").hasClass("bi-arrow--hidden")).toBeTrue();
 
         const liElements = $(element).find(".section-service__list-movies > li");
         expect(liElements.length).toBe(this.items.length);
 
         const links = liElements.find("a");
-        expect(links[0].href).toBe(this.items[0]["link"]);
-        expect(links[0].innerHTML).toBe(String(this.items[0]["movie_id"]));
-        expect(links[1].href).toBe(this.items[1]["link"]);
-        expect(links[1].innerHTML).toBe(String(this.items[1]["movie_id"]));
+        expect(links[0].href).toContain(`movie/${this.items[0].movie_id}`);
+        expect(links[1].href).toContain(`movie/${this.items[1].movie_id}`);
+
+        const imgs = liElements.find("img");
+        expect(imgs[0].src).toBe(this.expectedMoviePosterLinks[0]);
+        expect(imgs[1].src).toBe(this.expectedMoviePosterLinks[1]);
     });
 
     it("should build the elements for the second page and when there is no next page.", () => {
@@ -319,26 +357,24 @@ describe("buildMoviesDiv", () => {
         });
 
         // Act
-        buildMoviesDiv(element, moviePageData);
+        buildMoviesDiv(element, moviePageData, this.moviePosterData);
 
         // Assert
         const page = parseInt($(element).attr("data-page"));
         expect(page).toBe(moviePageData["page"]);
-        expect(
-            $(element).children(".bi-arrow-left-circle-fill").hasClass("bi-arrow--hidden")
-        ).toBeFalse();
-        expect(
-            $(element).children(".bi-arrow-right-circle-fill").hasClass("bi-arrow--hidden")
-        ).toBeTrue();
+        expect($(element).children(".bi-arrow-left-circle-fill").hasClass("bi-arrow--hidden")).toBeFalse();
+        expect($(element).children(".bi-arrow-right-circle-fill").hasClass("bi-arrow--hidden")).toBeTrue();
 
         const liElements = $(element).find(".section-service__list-movies > li");
         expect(liElements.length).toBe(this.items.length);
 
         const links = liElements.find("a");
-        expect(links[0].href).toBe(this.items[0]["link"]);
-        expect(links[0].innerHTML).toBe(String(this.items[0]["movie_id"]));
-        expect(links[1].href).toBe(this.items[1]["link"]);
-        expect(links[1].innerHTML).toBe(String(this.items[1]["movie_id"]));
+        expect(links[0].href).toContain(`movie/${this.items[0].movie_id}`);
+        expect(links[1].href).toContain(`movie/${this.items[1].movie_id}`);
+
+        const imgs = liElements.find("img");
+        expect(imgs[0].src).toBe(this.expectedMoviePosterLinks[0]);
+        expect(imgs[1].src).toBe(this.expectedMoviePosterLinks[1]);
     });
 
     it("should build the correct arrows when there is only a prev page.", () => {
@@ -353,15 +389,11 @@ describe("buildMoviesDiv", () => {
         });
 
         // Act
-        buildMoviesDiv(element, moviePageData);
+        buildMoviesDiv(element, moviePageData, this.moviePosterData);
 
         // Assert
-        expect(
-            $(element).children(".bi-arrow-left-circle-fill").hasClass("bi-arrow--hidden")
-        ).toBeFalse();
-        expect(
-            $(element).children(".bi-arrow-right-circle-fill").hasClass("bi-arrow--hidden")
-        ).toBeTrue();
+        expect($(element).children(".bi-arrow-left-circle-fill").hasClass("bi-arrow--hidden")).toBeFalse();
+        expect($(element).children(".bi-arrow-right-circle-fill").hasClass("bi-arrow--hidden")).toBeTrue();
     });
 
     it("should build the correct arrows when there is only a next page.", () => {
@@ -376,15 +408,11 @@ describe("buildMoviesDiv", () => {
         });
 
         // Act
-        buildMoviesDiv(element, moviePageData);
+        buildMoviesDiv(element, moviePageData, this.moviePosterData);
 
         // Assert
-        expect(
-            $(element).children(".bi-arrow-left-circle-fill").hasClass("bi-arrow--hidden")
-        ).toBeTrue();
-        expect(
-            $(element).children(".bi-arrow-right-circle-fill").hasClass("bi-arrow--hidden")
-        ).toBeFalse();
+        expect($(element).children(".bi-arrow-left-circle-fill").hasClass("bi-arrow--hidden")).toBeTrue();
+        expect($(element).children(".bi-arrow-right-circle-fill").hasClass("bi-arrow--hidden")).toBeFalse();
     });
 
     it("should build the correct arrows when there is a prev and next page.", () => {
@@ -399,15 +427,11 @@ describe("buildMoviesDiv", () => {
         });
 
         // Act
-        buildMoviesDiv(element, moviePageData);
+        buildMoviesDiv(element, moviePageData, this.moviePosterData);
 
         // Assert
-        expect(
-            $(element).children(".bi-arrow-left-circle-fill").hasClass("bi-arrow--hidden")
-        ).toBeFalse();
-        expect(
-            $(element).children(".bi-arrow-right-circle-fill").hasClass("bi-arrow--hidden")
-        ).toBeFalse();
+        expect($(element).children(".bi-arrow-left-circle-fill").hasClass("bi-arrow--hidden")).toBeFalse();
+        expect($(element).children(".bi-arrow-right-circle-fill").hasClass("bi-arrow--hidden")).toBeFalse();
     });
 
     it("should display no movies when movie page data contains no movies.", () => {
@@ -421,43 +445,112 @@ describe("buildMoviesDiv", () => {
             has_next: false,
         });
 
+        const moviePosterData = {};
+
         // Act
-        buildMoviesDiv(element, moviePageData);
+        buildMoviesDiv(element, moviePageData, moviePosterData);
 
         // Assert
         const page = parseInt($(element).attr("data-page"));
         expect(page).toBe(moviePageData["page"]);
-        expect(
-            $(element).children(".bi-arrow-left-circle-fill").hasClass("bi-arrow--hidden")
-        ).toBeTrue();
-        expect(
-            $(element).children(".bi-arrow-right-circle-fill").hasClass("bi-arrow--hidden")
-        ).toBeTrue();
+        expect($(element).children(".bi-arrow-left-circle-fill").hasClass("bi-arrow--hidden")).toBeTrue();
+        expect($(element).children(".bi-arrow-right-circle-fill").hasClass("bi-arrow--hidden")).toBeTrue();
 
         expect($(element).text()).toContain("No movies found");
     });
 
-    it("should display an error message when there is no moviePageData.", () => {
+    it(
+        "should display an error message if there is a connection issue " +
+            "when retrieving moviePageData; moviePageData is undefined.",
+        () => {
+            // Arrange
+            const element = createTestDivHelper("tubi")[0];
+
+            // Act
+            buildMoviesDiv(element);
+
+            // Assert
+            expect($(element).text()).toContain("Error");
+        }
+    );
+
+    it("should not have any movie poster src links if there are no movie posters for movies.", () => {
         // Arrange
         const element = createTestDivHelper("tubi")[0];
 
+        const moviePageData = Object.freeze({
+            items: this.items,
+            page: 1,
+            has_prev: false,
+            has_next: false,
+        });
+
+        const moviePosterData = {};
+
         // Act
-        buildMoviesDiv(element);
+        buildMoviesDiv(element, moviePageData, moviePosterData);
 
         // Assert
-        expect($(element).text()).toContain("Error");
+        const liElements = $(element).find(".section-service__list-movies > li");
+        const imgs = liElements.find("img");
+        expect(imgs[0].src).toBe("data:");
+        expect(imgs[0].alt).toBe(`Movie ${this.items[0].movie_id}`);
+        expect(imgs[1].src).toBe("data:");
+        expect(imgs[1].alt).toBe(`Movie ${this.items[1].movie_id}`);
     });
+
+    it(
+        "should not have any movie poster src links if there is a connection issue " +
+            "when retrieving moviePosterData; moviePosterData is undefined",
+        () => {
+            // Arrange
+            const element = createTestDivHelper("tubi")[0];
+
+            const moviePageData = Object.freeze({
+                items: this.items,
+                page: 1,
+                has_prev: false,
+                has_next: false,
+            });
+
+            const moviePosterData = undefined;
+
+            // Act
+            buildMoviesDiv(element, moviePageData, moviePosterData);
+
+            // Assert
+            const liElements = $(element).find(".section-service__list-movies > li");
+            const imgs = liElements.find("img");
+            expect(imgs[0].src).toBe("data:");
+            expect(imgs[0].alt).toBe(`Movie ${this.items[0].movie_id}`);
+            expect(imgs[1].src).toBe("data:");
+            expect(imgs[1].alt).toBe(`Movie ${this.items[1].movie_id}`);
+        }
+    );
 });
 
 describe("handleServiceMoviesPageChange", () => {
     beforeEach(() => {
-        this.testMoviePageData = { data: "test" };
+        this.origMoviePageData = { items: [{ movie_id: "1" }] };
+        this.moviePageData = JSON.parse(JSON.stringify(this.origMoviePageData));
 
-        this.getPageOfMoviesFromServiceSpy = spyOn(
-            window,
-            "getPageOfMoviesFromService"
-        ).and.returnValue(this.testMoviePageData);
+        // get array of IDs from moviePageData to simplify assertions
+        this.moviePageDataIds = Object.freeze(
+            this.moviePageData.items.reduce((arr, streamingOption) => {
+                arr.push(streamingOption.movie_id);
+                return arr;
+            }, [])
+        );
+
+        this.getPageOfMoviesFromServiceSpy = spyOn(window, "getPageOfMoviesFromService").and.returnValue(
+            this.moviePageData
+        );
         this.buildMoviesDivSpy = spyOn(window, "buildMoviesDiv");
+
+        this.origMoviePosterData = { movie_id: { verticalPoster: { w240: "example.com" } } };
+        window.getMoviePosters = jasmine
+            .createSpy("getMoviePostersSpy")
+            .and.returnValue(JSON.parse(JSON.stringify(this.origMoviePosterData)));
     });
 
     it("should load the previous page when the event contains the left arrow.", async () => {
@@ -485,7 +578,18 @@ describe("handleServiceMoviesPageChange", () => {
             serviceId,
             expectedPageToLoad
         );
-        expect(this.buildMoviesDivSpy).toHaveBeenCalledWith(moviesListDiv, this.testMoviePageData);
+
+        expect(window.getMoviePosters).toHaveBeenCalledWith(
+            this.moviePageDataIds,
+            jasmine.arrayContaining([]),
+            jasmine.arrayContaining([])
+        );
+
+        expect(this.buildMoviesDivSpy).toHaveBeenCalledWith(
+            moviesListDiv,
+            this.origMoviePageData,
+            this.origMoviePosterData
+        );
     });
 
     it("should load the next page when the event contains the right arrow.", async () => {
@@ -513,7 +617,18 @@ describe("handleServiceMoviesPageChange", () => {
             serviceId,
             expectedPageToLoad
         );
-        expect(this.buildMoviesDivSpy).toHaveBeenCalledWith(moviesListDiv, this.testMoviePageData);
+
+        expect(window.getMoviePosters).toHaveBeenCalledWith(
+            this.moviePageDataIds,
+            jasmine.arrayContaining([]),
+            jasmine.arrayContaining([])
+        );
+
+        expect(this.buildMoviesDivSpy).toHaveBeenCalledWith(
+            moviesListDiv,
+            this.origMoviePageData,
+            this.origMoviePosterData
+        );
     });
 });
 

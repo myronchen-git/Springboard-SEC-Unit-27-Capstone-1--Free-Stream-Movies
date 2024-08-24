@@ -24,10 +24,23 @@ $(document).ready(() => {
 async function getMoviesFromAllServices(countryCode) {
     const $servicesMoviesLists = $(".section-service__div-movies");
 
-    $servicesMoviesLists.each(async function (index, element) {
+    await $servicesMoviesLists.each(async function (index, element) {
         const serviceId = element.dataset.service;
+
         const moviePageData = await getPageOfMoviesFromService(countryCode, serviceId);
-        buildMoviesDiv(element, moviePageData);
+
+        let movieIds;
+        let moviePosterData;
+        if (moviePageData) {
+            movieIds = moviePageData.items.reduce((arr, currentItem) => {
+                arr.push(currentItem.movie_id);
+                return arr;
+            }, []);
+
+            moviePosterData = await getMoviePosters(movieIds, ["verticalPoster"], ["w240"]);
+        }
+
+        buildMoviesDiv(element, moviePageData, moviePosterData);
     });
 }
 
@@ -36,7 +49,7 @@ async function getMoviesFromAllServices(countryCode) {
  *
  * @param {String} countryCode The country's 2-letter code.
  * @param {String} serviceId Streaming service ID.
- * @param {Number} page The page for movies results.
+ * @param {Number} page The page for movies results or undefined.
  * @returns An Object {StreamingOption[] items, Number page, Boolean has_prev, Boolean has_next}.
  */
 async function getPageOfMoviesFromService(countryCode, serviceId, page) {
@@ -67,8 +80,9 @@ async function getPageOfMoviesFromService(countryCode, serviceId, page) {
  *
  * @param {Element} element The HTML div element that contains the list of movies.
  * @param {Object} moviePageData An Object {StreamingOption[] items, Number page, Boolean has_prev, Boolean has_next}.
+ * @param {Object} moviePosterData An Object {movie_id: {type: {size: link}}} or an empty Object.
  */
-function buildMoviesDiv(element, moviePageData) {
+function buildMoviesDiv(element, moviePageData, moviePosterData) {
     const $serviceMoviesUlElement = $(element).children(".section-service__list-movies");
     $serviceMoviesUlElement.empty();
 
@@ -92,7 +106,18 @@ function buildMoviesDiv(element, moviePageData) {
         } else {
             moviePageData.items.forEach((streamingOption) => {
                 $serviceMoviesUlElement.append(
-                    `<li><a href="${streamingOption["link"]}">${streamingOption["movie_id"]}</a></li>`
+                    `<li>
+                        <a href="movie/${streamingOption["movie_id"]}">
+                            <img
+                            src="${
+                                moviePosterData?.[streamingOption["movie_id"]]?.["verticalPoster"]?.[
+                                    "w240"
+                                ] ?? "data:" // supposedly good for no src
+                            }"
+                            alt="Movie ${streamingOption["movie_id"]}"
+                            width="240" height="320" />
+                        </a>
+                    </li>`
                 );
             });
         }
@@ -121,5 +146,17 @@ async function handleServiceMoviesPageChange(event) {
     }
 
     const moviePageData = await getPageOfMoviesFromService(countryCode, serviceId, pageToLoad);
-    buildMoviesDiv(delegateTarget, moviePageData);
+
+    let movieIds;
+    let moviePosterData;
+    if (moviePageData) {
+        movieIds = moviePageData.items.reduce((arr, currentItem) => {
+            arr.push(currentItem.movie_id);
+            return arr;
+        }, []);
+
+        moviePosterData = await getMoviePosters(movieIds, ["verticalPoster"], ["w240"]);
+    }
+
+    buildMoviesDiv(delegateTarget, moviePageData, moviePosterData);
 }
