@@ -9,7 +9,9 @@
   {% else %}
     {% for movie in movies %}
     <div id="movie-{{ movie['id'] }}">
-      <a href="movie/{{ movie['id'] }}"><span>temp link</span></a>
+      <a href="movie/{{ movie['id'] }}">
+        <img src="{{ movie['imageSet']['verticalPoster']['w240'] }}" />
+      </a>
       <h3>{{ movie['title'] }}</h3>
       <span>({{ movie['releaseYear'] }})</span>
       <p>{{ movie['overview'] }}</p>

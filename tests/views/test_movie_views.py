@@ -11,6 +11,7 @@ sys.path.append(root_dir)  # nopep8
 from types import MappingProxyType
 from unittest import TestCase
 from unittest.mock import MagicMock, patch
+from urllib import parse
 
 from flask import url_for
 
@@ -60,6 +61,8 @@ class MovieSearchViewTestCase(TestCase):
         mock_response.json.return_value = [MappingProxyType(show_stargate)]
         mock_requests.get.return_value = mock_response
 
+        expected_movie_poster_link_path = parse.urlparse(show_stargate['imageSet']['verticalPoster']['w240']).path
+
         # Act
         with app.test_client() as client:
             client.set_cookie("country_code", country_code)
@@ -70,6 +73,7 @@ class MovieSearchViewTestCase(TestCase):
             self.assertEqual(resp.status_code, 200)
             self.assertIn("Search Results", html)
             self.assertIn(title, html)
+            self.assertIn(expected_movie_poster_link_path, html)
 
             mock_requests.get.assert_called_once()
 
@@ -234,6 +238,8 @@ class MovieDetailsViewTestCase(TestCase):
         mock_response.json.return_value = MappingProxyType(show_stargate)
         mock_requests.get.return_value = mock_response
 
+        expected_movie_poster_link_path = parse.urlparse(show_stargate['imageSet']['verticalPoster']['w360']).path
+
         # Act
         with app.test_client() as client:
             client.set_cookie("country_code", country_code)
@@ -246,8 +252,7 @@ class MovieDetailsViewTestCase(TestCase):
             self.assertIn(show_stargate['streamingOptions']['us'][1]['link'], html)
             self.assertIn(show_stargate['streamingOptions']['us'][2]['link'], html)
 
-            # movie poster link; had to use hardcoded String since there is unknown parsing in the HTML
-            self.assertIn('https://cdn.movieofthenight.com/show/2332/poster/vertical/en/360.jpg', html)
+            self.assertIn(expected_movie_poster_link_path, html)
             self.assertIn(f'alt="{show_stargate['title']} Poster"', html)
 
             mock_requests.get.assert_called_once()
