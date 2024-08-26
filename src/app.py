@@ -207,15 +207,15 @@ def create_app(db_name, testing=False):
     def search_titles():
         """Calls Streaming Availability API to search for a specific movie."""
 
-        country = request.args.get('country')
+        country_code = request.cookies.get('country_code', DEFAULT_COUNTRY_CODE)
         title = request.args.get('title')
 
-        if not country or not title:
+        if not title:
             return redirect(url_for("home"))
 
         url = f"{STREAMING_AVAILABILITY_BASE_URL}/shows/search/title"
         headers = {'X-RapidAPI-Key': RAPID_API_KEY}
-        querystring = {"country": country,
+        querystring = {"country": country_code,
                        "title": title,
                        "show_type": "movie"}
 

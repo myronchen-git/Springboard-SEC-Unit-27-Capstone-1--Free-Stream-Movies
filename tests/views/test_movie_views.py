@@ -49,8 +49,9 @@ class MovieSearchViewTestCase(TestCase):
 
         # Arrange
         url = url_for("search_titles")
+        country_code = 'us'
         title = "Stargate"
-        query_string = {"country": "us", "title": title}
+        query_string = {"title": title}
 
         mock_response = MagicMock(name='mock_response')
         mock_response.status_code = 200
@@ -59,6 +60,7 @@ class MovieSearchViewTestCase(TestCase):
 
         # Act
         with app.test_client() as client:
+            client.set_cookie("country_code", country_code)
             resp = client.get(url, query_string=query_string)
             html = resp.get_data(as_text=True)
 
@@ -74,7 +76,8 @@ class MovieSearchViewTestCase(TestCase):
 
         # Arrange
         url = url_for("search_titles")
-        query_string = {"country": "us", "title": "plpmnb"}
+        country_code = 'us'
+        query_string = {"title": "plpmnb"}
 
         mock_response = MagicMock(name='mock_response')
         mock_response.status_code = 200
@@ -83,6 +86,7 @@ class MovieSearchViewTestCase(TestCase):
 
         # Act
         with app.test_client() as client:
+            client.set_cookie('country_code', country_code)
             resp = client.get(url, query_string=query_string)
             html = resp.get_data(as_text=True)
 
@@ -93,24 +97,23 @@ class MovieSearchViewTestCase(TestCase):
 
             mock_requests.get.assert_called_once()
 
-    def test_search_title_with_missing_required_parameters(self, mock_requests):
-        """Doing a title search without country or movie title should redirect to the homepage."""
+    def test_search_title_with_missing_required_parameter(self, mock_requests):
+        """Doing a title search without movie title should redirect to the homepage."""
 
         # Arrange
         url = url_for("search_titles")
-        query_strings = [{"country": "us"}, {"title": "Batman"}]
+        country_code = 'us'
 
         # Act
-        for query_string in query_strings:
-            with self.subTest(query_string=query_string):
-                with app.test_client() as client:
-                    resp = client.get(url, query_string=query_string)
+        with app.test_client() as client:
+            client.set_cookie('country_code', country_code)
+            resp = client.get(url)
 
         # Assert
-                    self.assertEqual(resp.status_code, 302)
-                    self.assertEqual(resp.location, url_for("home"))
+            self.assertEqual(resp.status_code, 302)
+            self.assertEqual(resp.location, url_for("home"))
 
-                    mock_requests.assert_not_called()
+            mock_requests.assert_not_called()
 
 
 @patch('src.app.requests', autospec=True)
