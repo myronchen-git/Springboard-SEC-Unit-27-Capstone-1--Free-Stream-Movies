@@ -1,0 +1,26 @@
+<nav>
+  <ul>
+    <li><a href="/">Home</a></li>
+    <li>
+      <form action="/movies" role="search">
+        <input
+          type="search"
+          name="title"
+          placeholder="Search Movie Titles"
+          aria-label="Search Movie Titles"
+          required
+        />
+      </form>
+    </li>
+    {% if current_user.is_authenticated %}
+    <li>
+      <form action="/users/logout" method="post">
+        <button type="submit">Logout</button>
+      </form>
+    </li>
+    {% else %}
+    <li><a href="/users/registration">Register</a></li>
+    <li><a href="/users/login">Login</a></li>
+    {% endif %}
+  </ul>
+</nav>
