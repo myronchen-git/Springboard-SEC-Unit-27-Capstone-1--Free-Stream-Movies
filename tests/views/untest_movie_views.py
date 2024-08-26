@@ -8,7 +8,9 @@ sys.path.append(root_dir)  # nopep8
 
 # --------------------------------------------------
 
+from types import MappingProxyType
 from unittest import TestCase
+from unittest.mock import MagicMock, patch
 
 from flask import url_for
 
@@ -17,6 +19,7 @@ from src.models.common import connect_db, db
 from src.models.movie import Movie
 from src.models.service import Service
 from src.models.streaming_option import StreamingOption
+from tests.data import show_stargate
 from tests.utility_functions import (movie_generator, service_generator,
                                      streaming_option_generator)
 
@@ -37,16 +40,22 @@ db.create_all()
 # --------------------------------------------------
 
 
+@patch('src.app.requests', autospec=True)
 class MovieSearchViewTestCase(TestCase):
     """Tests for views involving movie searches.  This currently involves real network calls to API."""
 
-    def test_search_title(self):
+    def test_search_title(self, mock_requests):
         """Tests for successfully searching for a movie title and displaying results."""
 
         # Arrange
         url = url_for("search_titles")
-        title = "Batman"
+        title = "Stargate"
         query_string = {"country": "us", "title": title}
+
+        mock_response = MagicMock(name='mock_response')
+        mock_response.status_code = 200
+        mock_response.json.return_value = [MappingProxyType(show_stargate)]
+        mock_requests.get.return_value = mock_response
 
         # Act
         with app.test_client() as client:
@@ -54,26 +63,37 @@ class MovieSearchViewTestCase(TestCase):
             html = resp.get_data(as_text=True)
 
         # Assert
+            self.assertEqual(resp.status_code, 200)
             self.assertIn("Search Results", html)
             self.assertIn(title, html)
 
-    def test_search_title_with_no_results(self):
+            mock_requests.get.assert_called_once()
+
+    def test_search_title_with_no_results(self, mock_requests):
         """Tests for successfully searching for a movie title that doesn't exist."""
 
         # Arrange
         url = url_for("search_titles")
         query_string = {"country": "us", "title": "plpmnb"}
 
+        mock_response = MagicMock(name='mock_response')
+        mock_response.status_code = 200
+        mock_response.json.return_value = []
+        mock_requests.get.return_value = mock_response
+
         # Act
         with app.test_client() as client:
             resp = client.get(url, query_string=query_string)
             html = resp.get_data(as_text=True)
 
         # Assert
+            self.assertEqual(resp.status_code, 200)
             self.assertIn("Search Results", html)
             self.assertIn("No results found.", html)
 
-    def test_search_title_with_missing_required_parameters(self):
+            mock_requests.get.assert_called_once()
+
+    def test_search_title_with_missing_required_parameters(self, mock_requests):
         """Doing a title search without country or movie title should redirect to the homepage."""
 
         # Arrange
@@ -90,7 +110,10 @@ class MovieSearchViewTestCase(TestCase):
                     self.assertEqual(resp.status_code, 302)
                     self.assertEqual(resp.location, url_for("home"))
 
+                    mock_requests.assert_not_called()
 
+
+@patch('src.app.requests', autospec=True)
 class MovieDetailsViewTestCase(TestCase):
     """Tests for the view of a movie's details page.  This currently involves real network calls to API."""
 
@@ -103,7 +126,7 @@ class MovieDetailsViewTestCase(TestCase):
     def tearDown(self):
         db.session.rollback()
 
-    def test_movie_details_page_with_data_in_local_database(self):
+    def test_movie_details_page_with_data_in_local_database(self, mock_requests):
         """Tests that a movie's details page is loaded with existing data from the local database."""
 
         # Arrange
@@ -134,7 +157,9 @@ class MovieDetailsViewTestCase(TestCase):
             self.assertIn(streaming_option_link, html)
             self.assertIn(service_light_theme_image, html)
 
-    def test_movie_details_page_with_only_movie_data_in_local_database(self):
+            mock_requests.assert_not_called()
+
+    def test_movie_details_page_with_only_movie_data_in_local_database(self, mock_requests):
         """Tests that a movie's details page is loaded from the local database, but there are no streaming options."""
 
         # Arrange
@@ -160,7 +185,9 @@ class MovieDetailsViewTestCase(TestCase):
             self.assertIn(movie_title, html)
             self.assertIn('Not free', html)
 
-    def test_movie_details_page_without_movie_data_in_local_database(self):
+            mock_requests.assert_not_called()
+
+    def test_movie_details_page_without_movie_data_in_local_database(self, mock_requests):
         """
         Tests that a movie's details page is loaded from the external API if it doesn't exist in the local database.
 
@@ -196,14 +223,21 @@ class MovieDetailsViewTestCase(TestCase):
         db.session.add_all([pluto, tubi])
         db.session.commit()
 
+        mock_response = MagicMock(name='mock_response')
+        mock_response.status_code = 200
+        mock_response.json.return_value = MappingProxyType(show_stargate)
+        mock_requests.get.return_value = mock_response
+
         # Act
         with app.test_client() as client:
             client.set_cookie("country_code", country_code)
             resp = client.get(url, follow_redirects=True)
             html = resp.get_data(as_text=True)
 
-        # Arrange
-        self.assertEqual(resp.status_code, 200)
-        self.assertIn('Stargate', html)
-        self.assertIn("https://pluto.tv/gsa/on-demand/movies/5ca2afdf2ecfdaae49357414/details", html)
-        self.assertIn("https://tubitv.com/movies/475643/stargate", html)
+        # Assert
+            self.assertEqual(resp.status_code, 200)
+            self.assertIn(show_stargate['title'], html)
+            self.assertIn(show_stargate['streamingOptions']['us'][1]['link'], html)
+            self.assertIn(show_stargate['streamingOptions']['us'][2]['link'], html)
+
+            mock_requests.get.assert_called_once()
