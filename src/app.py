@@ -259,7 +259,14 @@ def create_app(db_name, testing=False):
         streaming_options = db.session.query(StreamingOption).filter_by(
             country_code=country_code, movie_id=movie.id).all()
 
-        return render_template("movies/details.html", movie=movie, streaming_options=streaming_options)
+        movie_poster = MoviePoster.get_movie_posters([movie.id], ["verticalPoster"], ["w360"])[0]
+
+        return render_template(
+            "movies/details.html",
+            movie=movie,
+            streaming_options=streaming_options,
+            movie_poster=movie_poster
+        )
 
     # --------------------------------------------------
     # helper methods

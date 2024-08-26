@@ -3,6 +3,7 @@
 {% block title %}{{ movie.title }}{% endblock %}
 <!---->
 {% block content %}
+<img src="{{ movie_poster.link }}" alt="{{ movie.title }} Poster" width="360" height="480" />
 <h2>{{ movie.title }}</h2>
 <p>{{ movie.release_year }}</p>
 <p>{{ movie.runtime }} minutes</p>

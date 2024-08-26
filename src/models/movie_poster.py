@@ -53,7 +53,7 @@ class MoviePoster(db.Model):
         @param {list[str]} movie_ids - Movie IDs of the posters to retrieve.
         @param {list[str]} types - Movie poster types, such as verticalPoster.
         @param {list[str]} sizes - Movie poster sizes, such as w240.
-        @returns {movie_id: {type: {size: link}}}.
+        @returns list of MoviePosters.
         """
 
         for type in types:

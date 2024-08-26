@@ -17,10 +17,12 @@ from flask import url_for
 from src.app import create_app
 from src.models.common import connect_db, db
 from src.models.movie import Movie
+from src.models.movie_poster import MoviePoster
 from src.models.service import Service
 from src.models.streaming_option import StreamingOption
 from tests.data import show_stargate
-from tests.utility_functions import (movie_generator, service_generator,
+from tests.utility_functions import (movie_generator, movie_poster_generator,
+                                     service_generator,
                                      streaming_option_generator)
 
 # ==================================================
@@ -124,6 +126,7 @@ class MovieDetailsViewTestCase(TestCase):
         db.session.query(StreamingOption).delete()
         db.session.query(Service).delete()
         db.session.query(Movie).delete()
+        db.session.query(MoviePoster).delete()
         db.session.commit()
 
     def tearDown(self):
@@ -136,17 +139,14 @@ class MovieDetailsViewTestCase(TestCase):
         country_code = 'us'
 
         service = service_generator(1)[0]
-        service_light_theme_image = service.light_theme_image
         movie = movie_generator(1)[0]
-        movie_id = movie.id
-        movie_title = movie.title
-        streaming_option = streaming_option_generator(1, movie_id, country_code, service.id)[0]
-        streaming_option_link = streaming_option.link
+        streaming_option = streaming_option_generator(1, movie.id, country_code, service.id)[0]
+        movie_posters = movie_poster_generator([movie.id])
 
-        db.session.add_all([service, movie, streaming_option])
+        db.session.add_all([service, movie, streaming_option, *movie_posters])
         db.session.commit()
 
-        url = url_for('movie_details_page', movie_id=movie_id)
+        url = url_for('movie_details_page', movie_id=movie.id)
 
         # Act
         with app.test_client() as client:
@@ -156,9 +156,11 @@ class MovieDetailsViewTestCase(TestCase):
 
         # Assert
             self.assertEqual(resp.status_code, 200)
-            self.assertIn(movie_title, html)
-            self.assertIn(streaming_option_link, html)
-            self.assertIn(service_light_theme_image, html)
+            self.assertIn(movie.title, html)
+            self.assertIn(streaming_option.link, html)
+            self.assertIn(service.light_theme_image, html)
+            self.assertIn(f'www.example.com/{movie.id}/verticalPoster/w360', html)  # movie poster link
+            self.assertIn(f'alt="{movie.title} Poster"', html)
 
             mock_requests.assert_not_called()
 
@@ -169,13 +171,12 @@ class MovieDetailsViewTestCase(TestCase):
         country_code = 'us'
 
         movie = movie_generator(1)[0]
-        movie_id = movie.id
-        movie_title = movie.title
+        movie_posters = movie_poster_generator([movie.id])
 
-        db.session.add(movie)
+        db.session.add_all([movie, *movie_posters])
         db.session.commit()
 
-        url = url_for('movie_details_page', movie_id=movie_id)
+        url = url_for('movie_details_page', movie_id=movie.id)
 
         # Act
         with app.test_client() as client:
@@ -185,8 +186,10 @@ class MovieDetailsViewTestCase(TestCase):
 
         # Assert
             self.assertEqual(resp.status_code, 200)
-            self.assertIn(movie_title, html)
+            self.assertIn(movie.title, html)
             self.assertIn('Not free', html)
+            self.assertIn(f'www.example.com/{movie.id}/verticalPoster/w360', html)  # movie poster link
+            self.assertIn(f'alt="{movie.title} Poster"', html)
 
             mock_requests.assert_not_called()
 
@@ -242,5 +245,9 @@ class MovieDetailsViewTestCase(TestCase):
             self.assertIn(show_stargate['title'], html)
             self.assertIn(show_stargate['streamingOptions']['us'][1]['link'], html)
             self.assertIn(show_stargate['streamingOptions']['us'][2]['link'], html)
+
+            # movie poster link; had to use hardcoded String since there is unknown parsing in the HTML
+            self.assertIn('https://cdn.movieofthenight.com/show/2332/poster/vertical/en/360.jpg', html)
+            self.assertIn(f'alt="{show_stargate['title']} Poster"', html)
 
             mock_requests.get.assert_called_once()
