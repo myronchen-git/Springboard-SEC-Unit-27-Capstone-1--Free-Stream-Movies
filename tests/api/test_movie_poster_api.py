@@ -9,7 +9,6 @@ sys.path.append(root_dir)  # nopep8
 # --------------------------------------------------
 
 from unittest import TestCase
-from unittest.mock import patch
 
 from flask import url_for
 

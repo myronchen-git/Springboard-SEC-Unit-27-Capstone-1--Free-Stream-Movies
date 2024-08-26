@@ -143,7 +143,7 @@ class MovieDetailsViewTestCase(TestCase):
         db.session.add_all([service, movie, streaming_option])
         db.session.commit()
 
-        url = f'/movie/{movie_id}'
+        url = url_for('movie_details_page', movie_id=movie_id)
 
         # Act
         with app.test_client() as client:
@@ -172,7 +172,7 @@ class MovieDetailsViewTestCase(TestCase):
         db.session.add(movie)
         db.session.commit()
 
-        url = f'/movie/{movie_id}'
+        url = url_for('movie_details_page', movie_id=movie_id)
 
         # Act
         with app.test_client() as client:
@@ -198,7 +198,7 @@ class MovieDetailsViewTestCase(TestCase):
         # Arrange
         country_code = 'us'
         movie_id = '2332'  # Stargate
-        url = f'/movie/{movie_id}'
+        url = url_for('movie_details_page', movie_id=movie_id)
 
         pluto = Service(
             id='plutotv',
