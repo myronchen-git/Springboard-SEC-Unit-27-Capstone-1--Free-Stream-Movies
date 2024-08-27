@@ -1,26 +1,66 @@
-<nav>
-  <ul>
-    <li><a href="/">Home</a></li>
-    <li>
-      <form action="/movies" role="search">
-        <input
-          type="search"
-          name="title"
-          placeholder="Search Movie Titles"
-          aria-label="Search Movie Titles"
-          required
-        />
-      </form>
-    </li>
-    {% if current_user.is_authenticated %}
-    <li>
-      <form action="/users/logout" method="post">
-        <button type="submit">Logout</button>
-      </form>
-    </li>
-    {% else %}
-    <li><a href="/users/registration">Register</a></li>
-    <li><a href="/users/login">Login</a></li>
-    {% endif %}
-  </ul>
+<nav class="navbar navbar-expand-md color-bg-primary">
+  <div class="container-fluid">
+
+    <a class="navbar-brand color-tertiary" href="/">Home</a>
+    <button
+      class="navbar-toggler"
+      type="button"
+      data-bs-toggle="collapse"
+      data-bs-target="#navbarMain"
+      aria-controls="navbarMain"
+      aria-expanded="false"
+      aria-label="Toggle navigation"
+    >
+      <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div class="collapse navbar-collapse" id="navbarMain">
+      <ul class="navbar-nav w-100 d-flex">
+
+        <li class="nav-item p-0">
+          <!-- placeholder for future webpages -->
+        </li>
+
+        <li class="nav-item p-0 flex-grow-1 my-auto">
+          <div class="container-fluid">
+            <div class="row">
+              <div class="col col-md-6 mx-auto">
+                <form action="/movies" role="search">
+                  <div class="input-group">
+                    <input
+                      class="form-control"
+                      type="search"
+                      name="title"
+                      placeholder="Search Movie Titles"
+                      aria-label="Search Movie Titles"
+                      required
+                    />
+                    <button class="btn btn-light" type="submit">
+                      <i class="bi bi-search"></i>
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+        </li>
+
+        {% if current_user.is_authenticated %}
+        <li class="nav-item p-0">
+          <form class="p-2" action="/users/logout" method="post">
+            <button class="btn nav-link color-tertiary" type="submit">Logout</button>
+          </form>
+        </li>
+        {% else %}
+        <li class="nav-item navbar-text p-0">
+          <a class="nav-link text-light" href="/users/registration">Register</a>
+        </li>
+        <li class="nav-item navbar-text p-0">
+          <a class="nav-link text-light" href="/users/login">Login</a>
+        </li>
+        {% endif %}
+
+      </ul>
+    </div>
+  </div>
 </nav>

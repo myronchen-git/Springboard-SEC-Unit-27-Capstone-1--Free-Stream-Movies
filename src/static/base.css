@@ -1,7 +1,7 @@
 :root {
     --color-primary: #1f3a93; /* Dark Blue */
     --color-secondary: #ff4c4c; /* Vibrant Red */
-    --color_tertiary: #e0e0e0; /* Soft Gray */
+    --color-tertiary: #e0e0e0; /* Soft Gray */
 }
 
 .bi-arrow--hidden {
@@ -21,7 +21,7 @@
 }
 
 .color-tertiary {
-    color: var(--color_tertiary);
+    color: var(--color-tertiary);
 }
 
 nav.navbar .form-control:focus {
@@ -30,6 +30,6 @@ nav.navbar .form-control:focus {
 }
 
 body {
-    min-width: 576px;
-    background-color: var(--color_tertiary);
+    min-width: 320px;
+    background-color: var(--color-tertiary);
 }

@@ -32,8 +32,8 @@ class NavbarViewTestCase(TestCase):
         html = render_template('partials/navbar.html')
 
         # Assert
-        self.assertIn('<a href="/">Home</a>', html)
-        self.assertIn('form action="/movies"', html)
+        self.assertIn('href="/">Home</a>', html)
+        self.assertIn('action="/movies"', html)
         self.assertIn('placeholder="Search Movie Titles"', html)
 
     def test_display_navbar_when_not_logged_in(self):

@@ -102,12 +102,12 @@ def create_app(db_name, testing=False):
                 user = User.register(form.data)
                 flask_login.login_user(user, remember=True)
 
-                flash("Successfully registered.", "info")
+                flash("Successfully registered.", "success")
                 return redirect(url_for("home"))
 
             except UserRegistrationError as e:
                 flash(f"Invalid input(s) on registration form: "
-                      f"{str(e)}", "error")
+                      f"{str(e)}", "danger")
 
         return render_template("users/registration.html", form=form)
 
@@ -123,7 +123,7 @@ def create_app(db_name, testing=False):
             if user:
                 flask_login.login_user(user, remember=True)
 
-                flash("Successfully logged in.", "info")
+                flash("Successfully logged in.", "success")
                 return redirect(url_for("home"))
 
             flash("Invalid credentials.", 'danger')
@@ -136,7 +136,7 @@ def create_app(db_name, testing=False):
 
         flask_login.logout_user()
 
-        flash("Logout successful.", "info")
+        flash("Logout successful.", "success")
         return redirect(url_for("home"))
 
     @login_manager.user_loader
