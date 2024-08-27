@@ -3,26 +3,38 @@
 {% block title %}Home{% endblock %}
 <!---->
 {% block content %}
+<div class="container">
   {% for service in services %}
-  <section id="section-{{ service.id }}" class="section-service">
-    <div class="section-service__div-logo">
-      {% if theme == 'dark' %}
-      <img src="{{ service.dark_theme_image }}" alt="service.name" height="72" />
-      {% else %}
-      <img src="{{ service.light_theme_image }}" alt="service.name" height="72" />
-      {% endif %}
+  <div class="row my-4">
+    <div class="col">
+      <section id="section-{{ service.id }}" class="section-service card">
+        <div class="section-service__div-logo card-header color-bg-secondary">
+          {% if theme == 'dark' %}
+          <img src="{{ service.dark_theme_image }}" alt="service.name" height="72" />
+          {% else %}
+          <img src="{{ service.light_theme_image }}" alt="service.name" height="72" />
+          {% endif %}
+        </div>
+        <div class="section-service__div-movies card-body container" data-service="{{ service.id }}">
+          <div class="row">
+            <div class="col-auto p-0 my-auto">
+              <i class="btn btn-lg bi bi-arrow-left-circle-fill bi-arrow--hidden"></i>
+            </div>
+            <div class="col container text-center">
+              <ul class="section-service__list-movies row m-0 list-unstyled">
+                <li class="col">Loading Movies...</li>
+              </ul>
+            </div>
+            <div class="col-auto p-0 my-auto">
+              <i class="btn btn-lg bi bi-arrow-right-circle-fill bi-arrow--hidden"></i>
+            </div>
+          </div>
+        </div>
+      </section>
     </div>
-    <div class="section-service__div-movies" data-service="{{ service.id }}">
-      <i class="bi bi-arrow-left-circle-fill bi-arrow--hidden"></i>
-      <ul class="section-service__list-movies">
-        <li>
-          Loading Movies...
-        </li>
-      </ul>
-      <i class="bi bi-arrow-right-circle-fill bi-arrow--hidden"></i>
-    </div>
-  </section>
+  </div>
   {% endfor %}
+</div>
 {% endblock %}
 <!---->
 {% block scripts %}

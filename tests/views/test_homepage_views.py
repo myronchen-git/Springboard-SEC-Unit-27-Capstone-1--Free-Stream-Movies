@@ -78,7 +78,7 @@ class HomepageViewTestCase(TestCase):
         # Assert
         self.assertEqual(resp.status_code, 200)
 
-        self.assertIn(f'<section id="section-{services[0].id}" class="section-service">', html)
+        self.assertIn(f'<section id="section-{services[0].id}"', html)
         self.assertIn(f'<img src="{services[0].light_theme_image}" alt="service.name"', html)
         self.assertIn(f'data-service="{services[0].id}"', html)
         self.assertIn("Loading Movies...", html)
@@ -126,7 +126,7 @@ class HomepageViewTestCase(TestCase):
             for response_status_code in response_status_codes:
                 self.assertEqual(response_status_code, 200)
 
-            self.assertIn(f'<section id="section-{services[0].id}" class="section-service">', htmls[0])
-            self.assertNotIn(f'<section id="section-{services[1].id}" class="section-service">', htmls[0])
-            self.assertNotIn(f'<section id="section-{services[0].id}" class="section-service">', htmls[1])
-            self.assertIn(f'<section id="section-{services[1].id}" class="section-service">', htmls[1])
+            self.assertIn(f'<section id="section-{services[0].id}"', htmls[0])
+            self.assertNotIn(f'<section id="section-{services[1].id}"', htmls[0])
+            self.assertNotIn(f'<section id="section-{services[0].id}"', htmls[1])
+            self.assertIn(f'<section id="section-{services[1].id}"', htmls[1])

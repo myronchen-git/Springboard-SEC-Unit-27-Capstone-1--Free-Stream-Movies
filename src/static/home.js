@@ -83,22 +83,22 @@ async function getPageOfMoviesFromService(countryCode, serviceId, page) {
  * @param {Object} moviePosterData An Object {movie_id: {type: {size: link}}} or an empty Object.
  */
 function buildMoviesDiv(element, moviePageData, moviePosterData) {
-    const $serviceMoviesUlElement = $(element).children(".section-service__list-movies");
+    const $serviceMoviesUlElement = $(element).find(".section-service__list-movies");
     $serviceMoviesUlElement.empty();
 
     if (moviePageData) {
         $(element).attr("data-page", moviePageData["page"]);
 
         if (moviePageData["has_prev"]) {
-            $(element).children(".bi-arrow-left-circle-fill").removeClass("bi-arrow--hidden");
+            $(element).find(".bi-arrow-left-circle-fill").removeClass("bi-arrow--hidden");
         } else {
-            $(element).children(".bi-arrow-left-circle-fill").addClass("bi-arrow--hidden");
+            $(element).find(".bi-arrow-left-circle-fill").addClass("bi-arrow--hidden");
         }
 
         if (moviePageData["has_next"]) {
-            $(element).children(".bi-arrow-right-circle-fill").removeClass("bi-arrow--hidden");
+            $(element).find(".bi-arrow-right-circle-fill").removeClass("bi-arrow--hidden");
         } else {
-            $(element).children(".bi-arrow-right-circle-fill").addClass("bi-arrow--hidden");
+            $(element).find(".bi-arrow-right-circle-fill").addClass("bi-arrow--hidden");
         }
 
         if (moviePageData.items.length === 0) {
@@ -106,7 +106,7 @@ function buildMoviesDiv(element, moviePageData, moviePosterData) {
         } else {
             moviePageData.items.forEach((streamingOption) => {
                 $serviceMoviesUlElement.append(
-                    `<li>
+                    `<li class="col p-0 m-3">
                         <a href="movie/${streamingOption["movie_id"]}">
                             <img
                             src="${
