@@ -191,7 +191,7 @@ class MovieDetailsViewTestCase(TestCase):
         # Assert
             self.assertEqual(resp.status_code, 200)
             self.assertIn(movie.title, html)
-            self.assertIn('Not free', html)
+            self.assertIn('Not Free', html)
             self.assertIn(f'www.example.com/{movie.id}/verticalPoster/w360', html)  # movie poster link
             self.assertIn(f'alt="{movie.title} Poster"', html)
 

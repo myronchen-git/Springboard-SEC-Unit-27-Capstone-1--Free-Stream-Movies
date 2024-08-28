@@ -1,6 +1,7 @@
 :root {
     --color-primary: #1f3a93; /* Dark Blue */
     --color-secondary: #ff4c4c; /* Vibrant Red */
+    --color-secondary--75-trans: #ff4c4cbf; /* Vibrant Red, 75% transparency */
     --color-tertiary: #e0e0e0; /* Soft Gray */
 }
 
@@ -20,13 +21,26 @@
     background-color: var(--color-secondary);
 }
 
+.color-bg-secondary--75-trans {
+    background-color: var(--color-secondary--75-trans);
+}
+
 .color-tertiary {
     color: var(--color-tertiary);
+}
+
+.color-bg-tertiary {
+    background-color: var(--color-tertiary);
 }
 
 nav.navbar .form-control:focus {
     border-color: var(--color-secondary);
     box-shadow: 0 0 0.2em 0.1em var(--color-secondary);
+}
+
+.movie-details > li {
+    background-color: inherit;
+    border-color: inherit;
 }
 
 body {

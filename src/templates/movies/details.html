@@ -3,46 +3,94 @@
 {% block title %}{{ movie.title }}{% endblock %}
 <!---->
 {% block content %}
-<img src="{{ movie_poster.link }}" alt="{{ movie.title }} Poster" width="360" height="480" />
-<h2>{{ movie.title }}</h2>
-<p>{{ movie.release_year }}</p>
-<p>{{ movie.runtime }} minutes</p>
-<p>Rating: {{ movie.rating }}</p>
-<p>{{ movie.overview }}</p>
-<section>
-  <h4>Directors</h4>
-  <ul>
-    {% for director in movie.directors %}
-    <li>{{ director }}</li>
-    {% endfor %}
-  </ul>
-</section>
-<section>
-  <h4>Cast</h4>
-  <ul>
-    {% for cast_member in movie.cast %}
-    <li>{{ cast_member }}</li>
-    {% endfor %}
-  </ul>
-</section>
-<section>
-  {% if streaming_options|length == 0 %}
-  Not free
-  {% else %}
-  <ul>
-    {% for streaming_option in streaming_options %}
-      <a href="{{ streaming_option.link }}">
-        {% if theme == 'dark' %}
-        <img src="{{ streaming_option.service.dark_theme_image }}" alt="streaming_option.service.name" height="72" />
-        {% else %}
-        <img src="{{ streaming_option.service.light_theme_image }}" alt="streaming_option.service.name" height="72" />
-        {% endif %}
-      </a>
-      {% if streaming_option.expires_soon %}
-      <span class="expires-soon">Expires Soon</span>
-      {% endif %}
-    {% endfor %}
-  </ul>
-  {% endif %}
-</section>
+<main class="container py-4">
+  <div class="row">
+
+    <aside class="col-12 col-md-3 text-center">
+      <img
+        class="img-fluid rounded"
+        src="{{ movie_poster.link }}"
+        alt="{{ movie.title }} Poster"
+        width="360"
+        height="480"
+      />
+
+      <aside class="m-2">
+        <ul class="list-group list-unstyled">
+
+          {% if streaming_options|length == 0 %}
+          <li class="list-group-item color-bg-secondary--75-trans">Not Free</li>
+
+          {% else %}
+            {% for streaming_option in streaming_options %}
+            <li class="list-group-item p-0 color-bg-secondary--75-trans">
+              <a class="d-block p-2" href="{{ streaming_option.link }}">
+                {% if theme == 'dark' %}
+                <img
+                  src="{{ streaming_option.service.dark_theme_image }}"
+                  alt="streaming_option.service.name"
+                  height="72"
+                />
+                {% else %}
+                <img
+                  src="{{ streaming_option.service.light_theme_image }}"
+                  alt="streaming_option.service.name"
+                  height="72"
+                />
+                {% endif %}
+              </a>
+
+              {% if streaming_option.expires_soon %}
+              <p class="expires-soon">Expires Soon</p>
+              {% endif %}
+            </li>
+            {% endfor %}
+          {% endif %}
+
+        </ul>
+      </aside>
+    </aside>
+
+    <article class="col-12 col-md-9">
+      <ul class="movie-details list-group list-group-flush color-bg-tertiary border-black">
+
+        <li class="list-group-item">
+          <h2>{{ movie.title }}</h2>
+        </li>
+
+        <li class="list-group-item">
+          <section>
+            <p>{{ movie.release_year }} &#183; {{ movie.runtime }} minutes</p>
+            <p>Rating: {{ movie.rating }}</p>
+            <p>{{ movie.overview }}</p>
+          </section>
+        </li>
+
+        <li class="list-group-item">
+          <section>
+            <h4>Directors</h4>
+            <ul>
+              {% for director in movie.directors %}
+              <li>{{ director }}</li>
+              {% endfor %}
+            </ul>
+          </section>
+        </li>
+
+        <li class="list-group-item">
+          <section>
+            <h4>Cast</h4>
+            <ul>
+              {% for cast_member in movie.cast %}
+              <li>{{ cast_member }}</li>
+              {% endfor %}
+            </ul>
+          </section>
+        </li>
+
+      </ul>
+    </article>
+
+  </div>
+</main>
 {% endblock %}
