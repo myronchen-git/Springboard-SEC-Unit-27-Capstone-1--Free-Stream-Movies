@@ -1,14 +1,24 @@
 <form method="POST">
   {{ form.hidden_tag() }}
   {% for field in form if field.widget.input_type != "hidden" %}
-  <div>
+  <div class="form-floating mb-3">
+    {% if field.errors %}
+      {% set feedback_id = field.id.replace('_', '-') + '-feedback' %}
+
+      {{ field(**{
+        'class_': 'form-control is-invalid',
+        'aria-describedby': feedback_id
+      }) }}
+    {% else %}
+      {{ field(class_="form-control") }}
+    {% endif %}
+
     {{ field.label }}
-    {{ field }}
 
     {% for error in field.errors %}
-      {{ error }}
+      <span id="{{ feedback_id }}" class="text-danger">{{ error }}</span>
     {% endfor %}
   </div>
   {% endfor %}
-  <button type="submit">Submit</button>
+  <button class="btn btn-primary" type="submit">Submit</button>
 </form>

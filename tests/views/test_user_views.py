@@ -65,7 +65,7 @@ class UserRegistrationViewTestCase(TestCase):
 
         # Assert
         self.assertEqual(resp.status_code, 200)
-        self.assertIn("<h1>User Registration</h1>", html)
+        self.assertIn("User Registration</h1>", html)
         self.assertIn("Username", html)
         self.assertIn("Password", html)
         self.assertIn("Repeat Password", html)
@@ -121,7 +121,7 @@ class UserRegistrationViewTestCase(TestCase):
                     html = resp.get_data(as_text=True)
 
         # Assert
-                self.assertIn("<h1>User Registration</h1>", html)
+                self.assertIn("User Registration</h1>", html)
                 self.assertIn("is required.", html)
 
                 num_users = db.session.query(User).count()
@@ -146,7 +146,7 @@ class UserRegistrationViewTestCase(TestCase):
                     html = resp.get_data(as_text=True)
 
         # Assert
-                self.assertIn("<h1>User Registration</h1>", html)
+                self.assertIn("User Registration</h1>", html)
                 self.assertIn("is required.", html)
 
                 num_users = db.session.query(User).count()
@@ -166,7 +166,7 @@ class UserRegistrationViewTestCase(TestCase):
             html = resp.get_data(as_text=True)
 
         # Assert
-        self.assertIn("<h1>User Registration</h1>", html)
+        self.assertIn("User Registration</h1>", html)
         self.assertIn("Password must match.", html)
 
         num_users = db.session.query(User).count()
@@ -244,7 +244,7 @@ class UserLoginViewTestCase(TestCase):
 
         # Assert
         self.assertEqual(resp.status_code, 200)
-        self.assertIn("<h1>User Login</h1>", html)
+        self.assertIn("User Login</h1>", html)
         self.assertIn("Username", html)
         self.assertIn("Password", html)
 
