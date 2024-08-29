@@ -24,7 +24,7 @@
           {% else %}
             {% for streaming_option in streaming_options %}
             <li class="list-group-item p-0 color-bg-secondary--75-trans">
-              <a class="d-block p-2" href="{{ streaming_option.link }}">
+              <a class="d-block p-2 text-reset text-decoration-none" href="{{ streaming_option.link }}">
                 {% if theme == 'dark' %}
                 <img
                   src="{{ streaming_option.service.dark_theme_image }}"
@@ -38,11 +38,11 @@
                   height="72"
                 />
                 {% endif %}
-              </a>
 
-              {% if streaming_option.expires_soon %}
-              <p class="expires-soon">Expires Soon</p>
-              {% endif %}
+                {% if streaming_option.expires_soon %}
+                <p class="expires-soon my-1">Expires Soon</p>
+                {% endif %}
+              </a>
             </li>
             {% endfor %}
           {% endif %}
