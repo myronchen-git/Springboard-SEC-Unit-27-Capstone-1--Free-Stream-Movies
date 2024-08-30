@@ -3,7 +3,7 @@ from os.path import abspath, dirname, join
 
 # Adds root folder as a working directory.
 # This is needed so that imports can be found.
-root_dir = abspath(join(dirname(__file__), '../'))  # nopep8
+root_dir = abspath(join(dirname(__file__), '../../'))  # nopep8
 sys.path.append(root_dir)  # nopep8
 
 # --------------------------------------------------
