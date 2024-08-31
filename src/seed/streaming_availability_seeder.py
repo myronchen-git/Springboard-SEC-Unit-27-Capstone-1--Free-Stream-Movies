@@ -18,12 +18,16 @@ from src.app import RAPID_API_KEY, create_app
 from src.models.common import connect_db, db
 from src.models.country_service import CountryService
 from src.models.service import Service
-from src.util.file_handling import read_services_blacklist
+from src.util.file_handling import (read_services_blacklist,
+                                    retrieve_cursor_file_helper,
+                                    write_cursor_file_helper)
 from src.util.logger import create_logger
 
 # ==================================================
 
 BLACKLISTED_SERVICES = read_services_blacklist()
+EXT_API_REQUEST_RATE_LIMIT_PER_SECOND = 10
+EXT_API_REQUEST_RATE_LIMIT_PER_DAY = 100
 
 logger = create_logger(__name__, 'src/logs/seed.log')
 
@@ -97,11 +101,15 @@ def seed_services() -> None:
 def seed_movies_and_streams_from_one_request(country: str, service_id: str, cursor: str = None) -> str | None:
     """
     Adds records to the movies and streaming_options tables with data from one API request.
+    Returns the next cursor if there are more records to get, or returns 'end' if there aren't.
+    If the HTTP response status code from the API is not 200, then None is returned.
     Parameter country is country code.
 
-    Returns the next cursor (movie) to start at, if there are more results.
-
     See https://docs.movieofthenight.com/resource/shows#search-shows-by-filters
+
+    @returns {str} The next cursor (movie) to start at, if there are more results.
+    @returns {str} "end" if there is no more results to get.
+    @returns {None} None if response is not 200.
     """
 
     # set up variables
@@ -129,6 +137,8 @@ def seed_movies_and_streams_from_one_request(country: str, service_id: str, curs
             logger.info(f'Response has more results.  '
                         f'Next cursor is "{body['nextCursor']}".')
             return body['nextCursor']
+        else:
+            return 'end'
 
     else:
         logger.error(f'Unsuccessful response from API: '
@@ -137,8 +147,9 @@ def seed_movies_and_streams_from_one_request(country: str, service_id: str, curs
 
 def seed_movies_and_streams() -> None:
     """
-    Adds records to the movies and streaming_options tables
-    for all countries and free streaming services.
+    Adds records to the movies and streaming_options tables for all countries and free streaming services.
+    This will save the next cursor (movie), which will get the next page of movie data for a specified country
+    and streaming service.  In other words, there is bookmarking.
     """
 
     # retrieve all countries and services
@@ -148,21 +159,40 @@ def seed_movies_and_streams() -> None:
     countries_services = db.session.query(
         CountryService).filter_by(country_code='us', service_id='tubi').all()
 
+    cursors = retrieve_cursor_file_helper()
+
     for country_service in countries_services:
+        country_code = country_service.country_code
+        service_id = country_service.service_id
+
         logger.info(f'Seeding movies and streaming options for '
-                    f'{country_service.country_code} and {country_service.service_id}.')
-        cursor = None
+                    f'country "{country_code}" and service "{service_id}".')
+
+        # get cursor for specified country and service if it exists,
+        # else create nested dict structure to simplify code later on
+        # and set cursor to None
+        if country_code in cursors:
+            cursor = cursors[country_code].get(service_id)
+        else:
+            cursors[country_code] = {}
+            cursor = None
+
+        logger.debug(f'Saved next cursor is: "{cursor}".')
 
         # repeat requests due to Streaming Availability API rate limit
-        while True:
-            for i in range(10):
+        while cursor != 'end':
+            for i in range(EXT_API_REQUEST_RATE_LIMIT_PER_SECOND):
                 cursor = seed_movies_and_streams_from_one_request(
-                    country_service.country_code, country_service.service_id, cursor)
+                    country_code, service_id, cursor)
 
-                if not cursor:
+                if cursor:
+                    cursors[country_code][service_id] = cursor
+                    write_cursor_file_helper(cursors)
+
+                if not cursor or cursor == 'end':
                     break
 
-            if not cursor:
+            if not cursor or cursor == 'end':
                 break
 
             # sleep needed due to Streaming Availability API request rate limit per second
@@ -171,9 +201,10 @@ def seed_movies_and_streams() -> None:
 # ==================================================
 
 
-app = create_app("freestreammovies")
-connect_db(app)
-with app.app_context():
-    db.create_all()
-    # seed_services()
-    seed_movies_and_streams()
+if __name__ == "__main__":
+    app = create_app("freestreammovies")
+    connect_db(app)
+    with app.app_context():
+        db.create_all()
+        # seed_services()
+        seed_movies_and_streams()
