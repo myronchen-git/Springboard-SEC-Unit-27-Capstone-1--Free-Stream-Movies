@@ -15,7 +15,7 @@ def read_services_blacklist() -> set:
     """
     Reads services_blacklist.txt and puts the streaming service names into a Set.
 
-    Returns a Set containing blacklisted streaming services.
+    :return: A Set containing blacklisted streaming services.
     """
 
     location = "src/services_blacklist.txt"
@@ -33,9 +33,10 @@ def retrieve_cursor_file_helper() -> dict:
     """
     Opens the cursor file and parses the JSON data for next cursors.
 
-    @returns {dict} A dictionary containing country codes, for each country code to contain service IDs,
-    and for each service ID to contain the next cursor to use.  This won't contain countries or services
-    that didn't have a next cursor. ({country: {service_id: cursor}})
+    :return: A dictionary containing country codes, for each country code to contain service IDs,
+        and for each service ID to contain the next cursor to use.  This won't contain countries or services
+        that didn't have a next cursor.  This will be an empty dict if the file does not exist.
+        ({country: {service_id: cursor}})
     """
 
     try:
@@ -54,8 +55,8 @@ def write_cursor_file_helper(cursors: dict) -> None:
     """
     Writes the dictionary of cursors to the cursor file.
 
-    @param {dict} cursors - A dictionary containing country codes, for each country code to contain service IDs,
-    and for each service ID to contain the next cursor to use.  ({country: {service_id: cursor}})
+    :param cursors: A dictionary containing country codes, for each country code to contain service IDs,
+        and for each service ID to contain the next cursor to use.  ({country: {service_id: cursor}})
     """
 
     logger.debug(f'Writing cursors to file. cursors = {cursors}.')

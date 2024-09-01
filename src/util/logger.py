@@ -8,9 +8,9 @@ def create_logger(module_name: str, filepath: str) -> logging.Logger:
     Creates a logger for the specified module, which will output logs at the specified filepath.
     Filepath is relative to the root directory of this project.
 
-    @param {str} module_name - Name of the module that this logger is for.
-    @param {str} filepath - Path and file name to store the logs in.
-    @returns {Logger} A Logger instance from Python's logging module.
+    :param module_name: Name of the module that this logger is for.
+    :param filepath: Path and file name to store the logs in.
+    :return: A Logger instance from Python's logging module.
     """
 
     logger = logging.getLogger(module_name)

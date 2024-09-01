@@ -50,10 +50,11 @@ class MoviePoster(db.Model):
         Retrieves a dictionary of movie posters for specified movies, types, and sizes.
         Queries the database.
 
-        @param {list[str]} movie_ids - Movie IDs of the posters to retrieve.
-        @param {list[str]} types - Movie poster types, such as verticalPoster.
-        @param {list[str]} sizes - Movie poster sizes, such as w240.
-        @returns list of MoviePosters.
+        :param movie_ids: Movie IDs of the posters to retrieve.
+        :param types: Movie poster types, such as verticalPoster.
+        :param sizes: Movie poster sizes, such as w240.
+        :return: List of MoviePosters.
+        :raise UnrecognizedValueError: If a movie poster type or size is unrecognized.
         """
 
         for type in types:
@@ -82,8 +83,8 @@ class MoviePoster(db.Model):
         """
         Converts a list of MoviePosters to a dict {movie_id: {type: {size: link}}}.
 
-        @param {list[MoviePoster]} movie_posters - A list of MoviePoster objects.
-        @returns {movie_id: {type: {size: link}}}.
+        :param movie_posters: A list of MoviePoster objects.
+        :return: {movie_id: {type: {size: link}}}.
         """
 
         output = {}

@@ -7,7 +7,13 @@ from src.models.streaming_option import StreamingOption
 
 
 def service_generator(n: int) -> list[Service]:
-    """Creates n Services, with zero-indexed naming, and returning them in a List."""
+    """
+    Creates n Services, with zero-indexed naming, and returning them in a List.
+
+    :param int: The number of streaming services to create.
+    :return: A list of fake Services.
+    :raise ValueError: If n is negative or over 100.
+    """
 
     if n < 0 or n > 100:
         raise ValueError("n has to be between 0 to 100, inclusive.")
@@ -30,7 +36,13 @@ def service_generator(n: int) -> list[Service]:
 
 
 def movie_generator(n: int) -> list[Movie]:
-    """Creates n Movies, with zero-indexed naming, and returning them in a List."""
+    """
+    Creates n Movies, with zero-indexed naming, and returning them in a List.
+
+    :param int: The number of movies to create.
+    :return: A list of fake Movies.
+    :raise ValueError: If n is negative or over 100.
+    """
 
     if n < 0 or n > 100:
         raise ValueError("n has to be between 0 to 100, inclusive.")
@@ -57,7 +69,12 @@ def movie_generator(n: int) -> list[Movie]:
 
 
 def movie_poster_generator(movie_ids: list[str]) -> list[MoviePoster]:
-    """Creates MoviePosters from list of IDs, for all types and sizes, and returns them in a List."""
+    """
+    Creates MoviePosters from list of IDs, for all types and sizes, and returns them in a List.
+
+    :param movie_ids: A list of movie IDs to create posters for.
+    :return: A list of fake MoviePosters.
+    """
 
     output = []
 
@@ -77,7 +94,16 @@ def movie_poster_generator(movie_ids: list[str]) -> list[MoviePoster]:
 
 
 def streaming_option_generator(n: int, movie_id: str, country_code: str, service_id: str) -> list[StreamingOption]:
-    """Creates n StreamingOptions, with zero-indexed naming, and returning them in a List."""
+    """
+    Creates n StreamingOptions, with zero-indexed naming, and returning them in a List.
+
+    :param int: The number of streaming options to create.
+    :param movie_id: The movie ID to create streaming options for.
+    :param country_code: The country code to create streaming options for.
+    :param service_id: The service ID to create streaming options for.
+    :return: A list of fake StreamingOptions.
+    :raise ValueError: If n is negative or over 100.
+    """
 
     if n < 0 or n > 100:
         raise ValueError("n has to be between 0 to 100, inclusive.")

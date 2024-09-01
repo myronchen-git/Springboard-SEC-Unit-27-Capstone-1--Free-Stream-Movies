@@ -79,7 +79,10 @@ class StreamingOption(db.Model):
         """
         Retrieves one page of streaming options for a country and streaming service.
 
-        Returns a Flask-SQLAlchemy Pagination object.
+        :param country_code: A country's 2-char code.  For example, Canada is 'ca'.
+        :param service_id: A streaming service's ID.
+        :param page: The page to fetch.
+        :return: a Flask-SQLAlchemy Pagination object.
         """
 
         return db.session\

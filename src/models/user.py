@@ -60,7 +60,10 @@ class User(db.Model, UserMixin):
         """
         Saves user info into database.
 
-        Returns User object if successful, else raises an error.
+        :param user_data: A dict containing all of the User properties except id.
+        :return: User object if successful.
+        :raises UserRegistrationError: If user_data does not have all of the properties, excluding id;
+            or if database throws an error, such as if the username or email is already taken.
         """
 
         required_properties = [
@@ -96,7 +99,9 @@ class User(db.Model, UserMixin):
         Verifies that username and password are correct by checking the database to see if a user with the provided
         username exists, and that the password matches with that user.
 
-        Returns User object if valid, else returns False.
+        :param username: A registered username.
+        :param password: The password belonging to the username.
+        :return: User object if valid, else returns False.
         """
 
         user = db.session.query(User).filter_by(

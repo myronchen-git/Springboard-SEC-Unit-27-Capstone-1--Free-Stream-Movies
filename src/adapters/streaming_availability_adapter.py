@@ -21,8 +21,8 @@ def convert_show_json_into_movie_object(show: dict) -> Movie:
     """
     Converts Streaming Availability's Show object into a Movie object.
 
-    @param {dict} show - The JSON Show object retrieved from a response from Streaming Availability.
-    @returns {Movie} Movie object.
+    :param show: The JSON Show object retrieved from a response from Streaming Availability.
+    :return: Movie object.
     """
 
     movie = Movie(
@@ -49,12 +49,12 @@ def convert_streaming_option_json_into_object(
     """
     Converts Streaming Availability's Show object's streaming option into a StreamingOption object.
 
-    @param {dict} streaming_option - The JSON streamingOption object retrieved within a Show object from Streaming
-    Availability.
-    @param {str} movie_id - The movie ID that this streaming_option belongs to.
-    @param {str} country_code - The country that this streaming_option belongs to.
-    @returns {StreamingOption or None} A StreamingOption if successful.  If the streaming option is not free or is
-    blacklisted, then return None.
+    :param streaming_option: The JSON streamingOption object retrieved within a Show object from Streaming
+        Availability.
+    :param movie_id: The movie ID that this streaming_option belongs to.
+    :param country_code: The country that this streaming_option belongs to.
+    :return: A StreamingOption if successful.  If the streaming option is not free or is blacklisted,
+        then return None.
     """
 
     if streaming_option['type'] == 'free' \
@@ -78,10 +78,10 @@ def store_streaming_options(streaming_options: dict, movie_id: str) -> None:
     Goes through lists of streaming options from within a Show object from Streaming Availability
     and adds them to the database.
 
-    @param {dict} streaming_options - The JSON streamingOptions object retrieved within a Show object from Streaming
-    Availability.  This is the plural form, which contains a dictionary of countries, where each country contains
-    lists of streaming options.
-    @param {str} movie_id - The movie ID that this streaming_options belongs to.
+    :param streaming_options: The JSON streamingOptions object retrieved within a Show object from Streaming
+        Availability.  This is the plural form, which contains a dictionary of countries, where each country
+        contains lists of streaming options.
+    :param movie_id: The movie ID that this streaming_options belongs to.
     """
 
     for country_code, streaming_options in streaming_options.items():
@@ -103,7 +103,7 @@ def store_movie_and_streaming_options(show: dict) -> None:
     """
     Stores the movie and its streaming options from a Show object from Streaming Availability.
 
-    @param {dict} show - The JSON Show object retrieved from a response from Streaming Availability.
+    :param show: The JSON Show object retrieved from a response from Streaming Availability.
     """
 
     movie = convert_show_json_into_movie_object(show)
@@ -123,8 +123,8 @@ def convert_image_set_json_into_movie_poster_objects(image_set: dict, movie_id: 
     Converts Streaming Availability's Show object's image set of movie posters into MoviePoster objects.
     Currently, this just takes the vertical posters.
 
-    @param {dict} image_set - The JSON imageSet object within a Show object from Streaming Availability.
-    @returns {list[MoviePoster]} A list of MoviePosters.
+    :param image_set: The JSON imageSet object within a Show object from Streaming Availability.
+    :return: A list of MoviePosters.
     """
 
     poster_type = 'verticalPoster'

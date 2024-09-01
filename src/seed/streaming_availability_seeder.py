@@ -107,9 +107,13 @@ def seed_movies_and_streams_from_one_request(country: str, service_id: str, curs
 
     See https://docs.movieofthenight.com/resource/shows#search-shows-by-filters
 
-    @returns {str} The next cursor (movie) to start at, if there are more results.
-    @returns {str} "end" if there is no more results to get.
-    @returns {None} None if response is not 200.
+    :param country: The country code of the country to get data for.
+    :param service_id: The streaming service's ID to get data from.
+    :param cursor: The next cursor (movie) to use for getting the next page of results.  This has the form "ID:NAME".
+        This would be None if getting the first page of results.
+    :return: The next cursor (movie) to start at, if there are more results.
+        "end" if there is no more results to get.
+        None if response is not 200.
     """
 
     # set up variables
