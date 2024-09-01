@@ -1,7 +1,7 @@
 <nav class="navbar navbar-expand-md color-bg-primary">
   <div class="container-fluid">
 
-    <a class="navbar-brand color-tertiary" href="/">Home</a>
+    <a class="navbar-brand color-tertiary" href="{{ url_for('home') }}">Home</a>
     <button
       class="navbar-toggler"
       type="button"
@@ -25,7 +25,7 @@
           <div class="container-fluid">
             <div class="row">
               <div class="col col-md-6 mx-auto">
-                <form action="/movies" role="search">
+                <form action="{{ url_for('search_titles') }}" role="search">
                   <div class="input-group">
                     <input
                       class="form-control"
@@ -47,16 +47,16 @@
 
         {% if current_user.is_authenticated %}
         <li class="nav-item p-0">
-          <form class="p-2" action="/users/logout" method="post">
+          <form class="p-2" action="{{ url_for('logout_user') }}" method="post">
             <button class="btn nav-link color-tertiary" type="submit">Logout</button>
           </form>
         </li>
         {% else %}
         <li class="nav-item navbar-text p-0">
-          <a class="nav-link text-light" href="/users/registration">Register</a>
+          <a class="nav-link text-light" href="{{ url_for('register_user') }}">Register</a>
         </li>
         <li class="nav-item navbar-text p-0">
-          <a class="nav-link text-light" href="/users/login">Login</a>
+          <a class="nav-link text-light" href="{{ url_for('login_user') }}">Login</a>
         </li>
         {% endif %}
 
