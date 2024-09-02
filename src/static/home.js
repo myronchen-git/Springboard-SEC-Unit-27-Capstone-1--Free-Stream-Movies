@@ -102,7 +102,11 @@ function buildMoviesDiv(element, moviePageData, moviePosterData) {
         }
 
         if (moviePageData.items.length === 0) {
-            $serviceMoviesUlElement.append("<li>No movies found</li>");
+            $serviceMoviesUlElement.append(
+                `<li class="col">
+                    <p class="p-5 m-0">No movies found</p>
+                </li>`
+            );
         } else {
             moviePageData.items.forEach((streamingOption) => {
                 $serviceMoviesUlElement.append(
