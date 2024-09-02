@@ -130,3 +130,23 @@ class HomepageViewTestCase(TestCase):
             self.assertNotIn(f'<section id="section-{services[1].id}"', htmls[0])
             self.assertNotIn(f'<section id="section-{services[0].id}"', htmls[1])
             self.assertIn(f'<section id="section-{services[1].id}"', htmls[1])
+
+    def test_display_homepage_without_services(self):
+        """Tests that the homepage renders without any streaming services if a country doesn't have any free ones."""
+
+        # Arrange
+        url = url_for("home")
+
+        # setting up countries
+        country_codes = ['us']
+
+        # Act
+        with app.test_client() as client:
+            client.set_cookie(COOKIE_COUNTRY_CODE_NAME, country_codes[0])
+            resp = client.get(url, follow_redirects=True)
+            html = resp.get_data(as_text=True)
+
+        # Assert
+        self.assertEqual(resp.status_code, 200)
+
+        self.assertIn('No free streaming services', html)
