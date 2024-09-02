@@ -45,6 +45,71 @@
           </div>
         </li>
 
+        <li class="nav-item p-0">
+          <form id="form-country-selection">
+            <select class="form-select" aria-label="Select Country">
+              <option value="ae" title="United Arab Emirates">🇦🇪 سع</option>
+              <option value="ar" title="Argentina">🇦🇷 AR</option>
+              <option value="at" title="Austria">🇦🇹 AT</option>
+              <option value="au" title="Australia">🇦🇺 AU</option>
+              <option value="az" title="Azerbaijan">🇦🇿 AZ</option>
+              <option value="be" title="Belgium">🇧🇪 BE</option>
+              <option value="bg" title="Bulgaria">🇧🇬 BG</option>
+              <option value="br" title="Brazil">🇧🇷 BR</option>
+              <option value="ca" title="Canada">🇨🇦 CA</option>
+              <option value="ch" title="Switzerland">🇨🇭 CH</option>
+              <option value="cl" title="Chile">🇨🇱 CL</option>
+              <option value="co" title="Colombia">🇨🇴 CO</option>
+              <option value="cy" title="Cyprus">🇨🇾 CY</option>
+              <option value="cz" title="Czechia">🇨🇿 CZ</option>
+              <option value="de" title="Germany">🇩🇪 DE</option>
+              <option value="dk" title="Denmark">🇩🇰 DK</option>
+              <option value="ec" title="Ecuador">🇪🇨 EC</option>
+              <option value="ee" title="Estonia">🇪🇪 EE</option>
+              <option value="es" title="Spain">🇪🇸 ES</option>
+              <option value="fi" title="Finland">🇫🇮 FI</option>
+              <option value="fr" title="France">🇫🇷 FR</option>
+              <option value="gb" title="United Kingdom">🇬🇧 GB</option>
+              <option value="gr" title="Greece">🇬🇷 ΕΛ</option>
+              <option value="hk" title="Hong Kong">🇭🇰 香港</option>
+              <option value="hr" title="Croatia">🇭🇷 HR</option>
+              <option value="hu" title="Hungary">🇭🇺 HU</option>
+              <option value="id" title="Indonesia">🇮🇩 ID</option>
+              <option value="ie" title="Ireland">🇮🇪 IE</option>
+              <option value="il" title="Israel">🇮🇱 IL</option>
+              <option value="in" title="India">🇮🇳 भा</option>
+              <option value="is" title="Iceland">🇮🇸 IS</option>
+              <option value="it" title="Italy">🇮🇹 IT</option>
+              <option value="jp" title="Japan">🇯🇵 日本</option>
+              <option value="kr" title="South Korea">🇰🇷 대한</option>
+              <option value="lt" title="Lithuania">🇱🇹 LT</option>
+              <option value="md" title="Moldova">🇲🇩 MD</option>
+              <option value="mk" title="Macedonia">🇲🇰 MK</option>
+              <option value="mx" title="Mexico">🇲🇽 MX</option>
+              <option value="my" title="Malaysia">🇲🇾 MY</option>
+              <option value="nl" title="Netherlands">🇳🇱 NL</option>
+              <option value="no" title="Norway">🇳🇴 NO</option>
+              <option value="nz" title="New Zealand">🇳🇿 NZ</option>
+              <option value="pa" title="Panama">🇵🇦 PA</option>
+              <option value="pe" title="Peru">🇵🇪 PE</option>
+              <option value="ph" title="Philippines">🇵🇭 PH</option>
+              <option value="pl" title="Poland">🇵🇱 PL</option>
+              <option value="pt" title="Portugal">🇵🇹 PT</option>
+              <option value="ro" title="Romania">🇷🇴 RO</option>
+              <option value="rs" title="Serbia">🇷🇸 RS</option>
+              <option value="ru" title="Russia">🇷🇺 РФ</option>
+              <option value="se" title="Sweden">🇸🇪 SE</option>
+              <option value="sg" title="Singapore">🇸🇬 SG</option>
+              <option value="th" title="Thailand">🇹🇭 TH</option>
+              <option value="tr" title="Turkey">🇹🇷 TR</option>
+              <option value="ua" title="Ukraine">🇺🇦 UA</option>
+              <option value="us" title="United States">🇺🇸 US</option>
+              <option value="vn" title="Vietnam">🇻🇳 VN</option>
+              <option value="za" title="South Africa">🇿🇦 ZA</option>
+            </select>
+          </form>
+        </li>
+
         {% if current_user.is_authenticated %}
         <li class="nav-item p-0">
           <form class="p-2" action="{{ url_for('logout_user') }}" method="post">
