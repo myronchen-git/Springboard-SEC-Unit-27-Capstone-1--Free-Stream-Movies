@@ -37,6 +37,7 @@ load_dotenv()
 RAPID_API_KEY = os.environ.get('RAPID_API_KEY')
 STREAMING_AVAILABILITY_BASE_URL = "https://streaming-availability.p.rapidapi.com"
 
+COOKIE_COUNTRY_CODE_NAME = 'countryCode'
 DEFAULT_COUNTRY_CODE = 'us'
 
 # --------------------------------------------------
@@ -77,7 +78,7 @@ def create_app(db_name, testing=False):
     def home():
         """Render homepage."""
 
-        country_code = request.cookies.get('country_code', DEFAULT_COUNTRY_CODE)
+        country_code = request.cookies.get(COOKIE_COUNTRY_CODE_NAME, DEFAULT_COUNTRY_CODE)
 
         services = db.session\
             .query(Service)\
@@ -207,7 +208,7 @@ def create_app(db_name, testing=False):
     def search_titles():
         """Calls Streaming Availability API to search for a specific movie."""
 
-        country_code = request.cookies.get('country_code', DEFAULT_COUNTRY_CODE)
+        country_code = request.cookies.get(COOKIE_COUNTRY_CODE_NAME, DEFAULT_COUNTRY_CODE)
         title = request.args.get('title')
 
         if not title:
@@ -255,7 +256,7 @@ def create_app(db_name, testing=False):
                 # temp, replace with custom error
                 return "Error", resp.status_code
 
-        country_code = request.cookies.get('country_code', DEFAULT_COUNTRY_CODE)
+        country_code = request.cookies.get(COOKIE_COUNTRY_CODE_NAME, DEFAULT_COUNTRY_CODE)
         streaming_options = db.session.query(StreamingOption).filter_by(
             country_code=country_code, movie_id=movie.id).all()
 

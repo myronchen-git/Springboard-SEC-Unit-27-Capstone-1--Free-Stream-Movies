@@ -15,7 +15,7 @@ from urllib import parse
 
 from flask import url_for
 
-from src.app import create_app
+from src.app import COOKIE_COUNTRY_CODE_NAME, create_app
 from src.models.common import connect_db, db
 from src.models.movie import Movie
 from src.models.movie_poster import MoviePoster
@@ -65,7 +65,7 @@ class MovieSearchViewTestCase(TestCase):
 
         # Act
         with app.test_client() as client:
-            client.set_cookie("country_code", country_code)
+            client.set_cookie(COOKIE_COUNTRY_CODE_NAME, country_code)
             resp = client.get(url, query_string=query_string)
             html = resp.get_data(as_text=True)
 
@@ -92,7 +92,7 @@ class MovieSearchViewTestCase(TestCase):
 
         # Act
         with app.test_client() as client:
-            client.set_cookie('country_code', country_code)
+            client.set_cookie(COOKIE_COUNTRY_CODE_NAME, country_code)
             resp = client.get(url, query_string=query_string)
             html = resp.get_data(as_text=True)
 
@@ -112,7 +112,7 @@ class MovieSearchViewTestCase(TestCase):
 
         # Act
         with app.test_client() as client:
-            client.set_cookie('country_code', country_code)
+            client.set_cookie(COOKIE_COUNTRY_CODE_NAME, country_code)
             resp = client.get(url)
 
         # Assert
@@ -154,7 +154,7 @@ class MovieDetailsViewTestCase(TestCase):
 
         # Act
         with app.test_client() as client:
-            client.set_cookie("country_code", country_code)
+            client.set_cookie(COOKIE_COUNTRY_CODE_NAME, country_code)
             resp = client.get(url, follow_redirects=True)
             html = resp.get_data(as_text=True)
 
@@ -184,7 +184,7 @@ class MovieDetailsViewTestCase(TestCase):
 
         # Act
         with app.test_client() as client:
-            client.set_cookie("country_code", country_code)
+            client.set_cookie(COOKIE_COUNTRY_CODE_NAME, country_code)
             resp = client.get(url, follow_redirects=True)
             html = resp.get_data(as_text=True)
 
@@ -242,7 +242,7 @@ class MovieDetailsViewTestCase(TestCase):
 
         # Act
         with app.test_client() as client:
-            client.set_cookie("country_code", country_code)
+            client.set_cookie(COOKIE_COUNTRY_CODE_NAME, country_code)
             resp = client.get(url, follow_redirects=True)
             html = resp.get_data(as_text=True)
 

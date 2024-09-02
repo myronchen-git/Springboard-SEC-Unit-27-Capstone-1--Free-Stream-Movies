@@ -12,7 +12,7 @@ from unittest import TestCase
 
 from flask import url_for
 
-from src.app import create_app
+from src.app import COOKIE_COUNTRY_CODE_NAME, create_app
 from src.models.common import connect_db, db
 from src.models.country_service import CountryService
 from src.models.movie import Movie
@@ -71,7 +71,7 @@ class HomepageViewTestCase(TestCase):
 
         # Act
         with app.test_client() as client:
-            client.set_cookie("country_code", country_codes[0])
+            client.set_cookie(COOKIE_COUNTRY_CODE_NAME, country_codes[0])
             resp = client.get(url, follow_redirects=True)
             html = resp.get_data(as_text=True)
 
@@ -115,7 +115,7 @@ class HomepageViewTestCase(TestCase):
             htmls = []
 
             for i in range(len(country_codes)):
-                client.set_cookie("country_code", country_codes[i])
+                client.set_cookie(COOKIE_COUNTRY_CODE_NAME, country_codes[i])
                 resp = client.get(url, follow_redirects=True)
                 html = resp.get_data(as_text=True)
 
