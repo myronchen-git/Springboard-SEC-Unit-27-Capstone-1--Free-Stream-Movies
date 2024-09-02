@@ -66,7 +66,7 @@ describe("serializeCookie", () => {
         result = serializeCookie(name, val);
 
         // Assert
-        expect(result).toBe("country_code=us");
+        expect(result).toBe(`${name}=${val}; Max-Age=31557600; Path=/`);
     });
 
     it("should return a URI-safe String, when given special characters.", () => {
@@ -78,7 +78,7 @@ describe("serializeCookie", () => {
         result = serializeCookie(name, val);
 
         // Assert
-        expect(result).toBe("smiley%E2%98%BA=m%3At");
+        expect(result).toBe("smiley%E2%98%BA=m%3At; Max-Age=31557600; Path=/");
     });
 
     it("should return an empty String if name argument is falsy.", () => {
@@ -103,5 +103,18 @@ describe("serializeCookie", () => {
 
         // Assert
         expect(result).toBe("");
+    });
+
+    it("should allow setting the expiration time.", () => {
+        // Arrange
+        const name = "country_code";
+        const val = "us";
+        const maxAge = 60;
+
+        // Act
+        result = serializeCookie(name, val, maxAge);
+
+        // Assert
+        expect(result).toBe(`${name}=${val}; Max-Age=${maxAge}; Path=/`);
     });
 });
