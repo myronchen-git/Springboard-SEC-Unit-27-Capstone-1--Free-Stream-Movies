@@ -18,9 +18,9 @@ from src.app import RAPID_API_KEY, create_app
 from src.models.common import connect_db, db
 from src.models.country_service import CountryService
 from src.models.service import Service
-from src.util.file_handling import (read_services_blacklist,
-                                    retrieve_cursor_file_helper,
-                                    write_cursor_file_helper)
+from src.util.file_handling import (read_json_file_helper,
+                                    read_services_blacklist,
+                                    write_json_file_helper)
 from src.util.logger import create_logger
 
 # ==================================================
@@ -28,6 +28,8 @@ from src.util.logger import create_logger
 BLACKLISTED_SERVICES = read_services_blacklist()
 EXT_API_REQUEST_RATE_LIMIT_PER_SECOND = 10
 EXT_API_REQUEST_RATE_LIMIT_PER_DAY = 100
+
+cursor_file_location = 'src/seed/streaming_availability_cursors.json'
 
 logger = create_logger(__name__, 'src/logs/seed.log')
 
@@ -152,8 +154,16 @@ def seed_movies_and_streams_from_one_request(country: str, service_id: str, curs
 def seed_movies_and_streams() -> None:
     """
     Adds records to the movies and streaming_options tables for all countries and free streaming services.
+
     This will save the next cursor (movie), which will get the next page of movie data for a specified country
     and streaming service.  In other words, there is bookmarking.
+
+    Cursors will be in a dictionary containing country codes, where each country code contains service IDs,
+    and each service ID containing the next cursor to use.  This won't contain countries or services
+    that didn't have a next cursor.  It is possible that cursors will be an empty dict.
+    ({country: {service_id: cursor}})
+
+    Cursors will be saved into a JSON file.
     """
 
     # retrieve all countries and services
@@ -163,7 +173,7 @@ def seed_movies_and_streams() -> None:
     countries_services = db.session.query(
         CountryService).filter_by(country_code='us', service_id='tubi').all()
 
-    cursors = retrieve_cursor_file_helper()
+    cursors = read_json_file_helper(cursor_file_location)
 
     for country_service in countries_services:
         country_code = country_service.country_code
@@ -191,7 +201,7 @@ def seed_movies_and_streams() -> None:
 
                 if cursor:
                     cursors[country_code][service_id] = cursor
-                    write_cursor_file_helper(cursors)
+                    write_json_file_helper(cursor_file_location, cursors)
 
                 if not cursor or cursor == 'end':
                     break

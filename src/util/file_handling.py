@@ -6,8 +6,6 @@ from src.util.logger import create_logger
 
 logger = create_logger(__name__, 'src/logs/seed.log')
 
-cursor_file_location = 'src/seed/streaming_availability_cursors.json'
-
 # --------------------------------------------------
 
 
@@ -29,39 +27,37 @@ def read_services_blacklist() -> set:
     return blacklist
 
 
-def retrieve_cursor_file_helper() -> dict:
+def read_json_file_helper(file_location: str) -> dict:
     """
-    Opens the cursor file and parses the JSON data for next cursors.
+    Opens a JSON file and parses the contents.
 
-    :return: A dictionary containing country codes, for each country code to contain service IDs,
-        and for each service ID to contain the next cursor to use.  This won't contain countries or services
-        that didn't have a next cursor.  This will be an empty dict if the file does not exist.
-        ({country: {service_id: cursor}})
+    :param file_location: The location of the file, relative to root.
+    :return: A dictionary.
     """
 
     try:
-        with open(cursor_file_location) as f:
-            cursors = json.loads(f.read())
-            logger.info("Cursors file successfully read and parsed.")
-            logger.debug(f'cursors = {cursors}.')
-            return cursors
+        with open(file_location) as f:
+            contents = json.loads(f.read())
+            logger.info("JSON file successfully read and parsed.")
+            logger.debug(f'Contents are {contents}.')
+            return contents
 
     except OSError:
-        logger.warn("Cursors file does not exist.  Returning empty dict.")
+        logger.warn("JSON file does not exist.  Returning empty dict.")
         return {}
 
 
-def write_cursor_file_helper(cursors: dict) -> None:
+def write_json_file_helper(file_location: str, contents: dict) -> None:
     """
-    Writes the dictionary of cursors to the cursor file.
+    Writes the dictionary of contents to a file.  Overwrites existing file.
 
-    :param cursors: A dictionary containing country codes, for each country code to contain service IDs,
-        and for each service ID to contain the next cursor to use.  ({country: {service_id: cursor}})
+    :param file_location: The location of the file, relative to root.
+    :param contents: A dictionary.
     """
 
-    logger.debug(f'Writing cursors to file. cursors = {cursors}.')
+    logger.debug(f'Writing contents to file. Contents are {contents}.')
 
-    with open(cursor_file_location, 'w') as f:
-        f.write(json.dumps(cursors, indent=4, sort_keys=True))
+    with open(file_location, 'w') as f:
+        f.write(json.dumps(contents, indent=4, sort_keys=True))
 
-    logger.info("Cursors written to file.")
+    logger.info("Contents written to file.")
