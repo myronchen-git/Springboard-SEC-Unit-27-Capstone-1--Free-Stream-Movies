@@ -120,11 +120,16 @@ def store_movie_and_streaming_options(show: dict) -> None:
     :param show: The JSON Show object retrieved from a response from Streaming Availability.
     """
 
-    movie = convert_show_json_into_movie_object(show)
-    logger.info(f'Adding Movie {movie.id} ({movie.title}) to session.')
+    existing_movie = db.session.query(Movie).get(show['id'])
+    movie = convert_show_json_into_movie_object(show, existing_movie)
 
-    movie_posters = convert_image_set_json_into_movie_poster_objects(show['imageSet'], show['id'])
-    logger.info(f'Adding {len(movie_posters)} posters from Movie {show['id']} ({show['title']}) to session.')
+    existing_movie_posters = db.session.query(MoviePoster).filter_by(movie_id=show['id']).all()
+    movie_posters = convert_image_set_json_into_movie_poster_objects(
+        show['imageSet'], show['id'], existing_movie_posters)
+
+    logger.info(f'Adding/updating Movie {movie.id} ({movie.title}) to session and database.')
+    logger.info(f'Adding {len(movie_posters)} posters from Movie {show['id']} '
+                f'({show['title']}) to session and database.')
 
     db.session.add_all([movie, *movie_posters])
     db.session.commit()

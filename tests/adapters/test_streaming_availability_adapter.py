@@ -18,6 +18,7 @@ from src.app import create_app
 from src.models.common import connect_db, db
 from src.models.movie import Movie
 from src.models.movie_poster import MoviePoster
+from src.models.service import Service
 from src.models.streaming_option import StreamingOption
 from tests.utility_functions import service_generator
 
@@ -85,16 +86,21 @@ class StreamingAvailabilityAdapterIntegTests(TestCase):
     """Tests for functions that interact with Streaming Availability."""
 
     def setUp(self):
-        db.session.query(Movie).delete()
+        db.session.query(MoviePoster).delete()
         db.session.query(StreamingOption).delete()
+        db.session.query(Movie).delete()
+        db.session.query(Service).delete()
 
         db.session.commit()
 
     def tearDown(self):
         db.session.rollback()
 
-    def test_store_movie_and_streaming_options(self):
-        """Tests for successfully adding a movie and its streaming options to the database."""
+    def test_store_movie_and_streaming_options_for_new_data(self):
+        """
+        Tests for successfully adding a movie and its streaming options to the database
+        when they don't already exist in the database.
+        """
 
         # Arrange
         services = service_generator(2)
@@ -186,3 +192,82 @@ class StreamingAvailabilityAdapterIntegTests(TestCase):
         self.assertEqual(len(us_streaming_option_links), 2)
         self.assertIn(link00, us_streaming_option_links)
         self.assertIn(link01, us_streaming_option_links)
+
+    def test_store_movie_and_streaming_options_for_updating_data(self):
+        """Tests for successfully updating old data in the database."""
+
+        # Arrange
+        services = service_generator(1)
+        service00_id = services[0].id
+        db.session.add_all(services)
+        db.session.commit()
+
+        movie_id = "movie1"
+
+        def create_show_json(service_id: str, movie_id: str, subscript: str) -> dict:
+            link00 = f"www.youtube.com/{movie_id}-{subscript}"
+            streaming_options_json = {
+                "us": [
+                    {
+                        "service": {"id": service_id},
+                        "type": "free",
+                        "link": link00,
+                        "expiresSoon": False
+                    }]
+            }
+
+            image_set_json = {
+                "verticalPoster": {
+                    "w240": f"example.com/w240-{subscript}",
+                    "w360": f"example.com/w360-{subscript}"
+                }
+            }
+
+            show_json = {
+                "id": movie_id,
+                "imdbId": "tt0468569",
+                "tmdbId": "movie/155",
+                "title": f"{subscript} title",
+                "overview": f"{subscript} description",
+                "releaseYear": 2008,
+                "originalTitle": f"{subscript} title",
+                "cast": ["person1", "person2"],
+                "rating": 87,
+                "runtime": 152,
+                "imageSet": image_set_json,
+                "streamingOptions": streaming_options_json
+            }
+
+            return show_json
+
+        subscript = 'old'
+        show_json_old = create_show_json(service00_id, movie_id, subscript)
+        store_movie_and_streaming_options(deepcopy(show_json_old))
+
+        subscript = 'new'
+        show_json_new = create_show_json(service00_id, movie_id, subscript)
+        streaming_option_link_new = f"www.youtube.com/{movie_id}-{subscript}"
+
+        # Act
+        store_movie_and_streaming_options(deepcopy(show_json_new))
+
+        # Assert
+        movies = db.session.query(Movie).all()
+        self.assertEqual(len(movies), 1)
+        self.assertEqual(movies[0].id, movie_id)
+        self.assertEqual(movies[0].title, show_json_new['title'])
+        self.assertEqual(movies[0].overview, show_json_new['overview'])
+
+        movie_posters = db.session.query(MoviePoster).all()
+        self.assertEqual(len(movie_posters), 2)
+        for movie_poster in movie_posters:
+            self.assertEqual(movie_poster.movie_id, movie_id)
+            self.assertEqual(movie_poster.type, "verticalPoster")
+        self.assertEqual(movie_posters[0].size, "w240")
+        self.assertEqual(movie_posters[0].link, "example.com/w240-new")
+        self.assertEqual(movie_posters[1].size, "w360")
+        self.assertEqual(movie_posters[1].link, "example.com/w360-new")
+
+        streaming_options = db.session.query(StreamingOption).all()
+        self.assertEqual(len(streaming_options), 1)
+        self.assertEqual(streaming_options[0].link, streaming_option_link_new)
