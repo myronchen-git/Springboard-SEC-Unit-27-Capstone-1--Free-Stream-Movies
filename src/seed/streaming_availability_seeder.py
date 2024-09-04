@@ -18,16 +18,14 @@ from src.app import RAPID_API_KEY, create_app
 from src.models.common import connect_db, db
 from src.models.country_service import CountryService
 from src.models.service import Service
+from src.seed.common_constants import (
+    BLACKLISTED_SERVICES,
+    STREAMING_AVAILABILITY_API_REQUEST_RATE_LIMIT_PER_SECOND)
 from src.util.file_handling import (read_json_file_helper,
-                                    read_services_blacklist,
                                     write_json_file_helper)
 from src.util.logger import create_logger
 
 # ==================================================
-
-BLACKLISTED_SERVICES = read_services_blacklist()
-EXT_API_REQUEST_RATE_LIMIT_PER_SECOND = 10
-EXT_API_REQUEST_RATE_LIMIT_PER_DAY = 100
 
 cursor_file_location = 'src/seed/streaming_availability_cursors.json'
 
@@ -195,7 +193,7 @@ def seed_movies_and_streams() -> None:
 
         # repeat requests due to Streaming Availability API rate limit
         while cursor != 'end':
-            for i in range(EXT_API_REQUEST_RATE_LIMIT_PER_SECOND):
+            for i in range(STREAMING_AVAILABILITY_API_REQUEST_RATE_LIMIT_PER_SECOND):
                 cursor = seed_movies_and_streams_from_one_request(
                     country_code, service_id, cursor)
 
