@@ -44,29 +44,29 @@ def convert_show_json_into_movie_object(show: dict) -> Movie:
 
 
 def convert_streaming_option_json_into_object(
-        streaming_option: dict, movie_id: str, country_code: str
+        streaming_option_data: dict, movie_id: str, country_code: str
 ) -> StreamingOption | None:
     """
     Converts Streaming Availability's Show object's streaming option into a StreamingOption object.
 
-    :param streaming_option: The JSON streamingOption object retrieved within a Show object from Streaming
+    :param streaming_option_data: The JSON streamingOption object retrieved within a Show object from Streaming
         Availability.
-    :param movie_id: The movie ID that this streaming_option belongs to.
-    :param country_code: The country that this streaming_option belongs to.
+    :param movie_id: The movie ID that this streaming_option_data belongs to.
+    :param country_code: The country that this streaming_option_data belongs to.
     :return: A StreamingOption if successful.  If the streaming option is not free or is blacklisted,
         then return None.
     """
 
-    if streaming_option['type'] == 'free' \
-            and streaming_option['service']['id'].lower() not in BLACKLISTED_SERVICES:
+    if streaming_option_data['type'] == 'free' \
+            and streaming_option_data['service']['id'].lower() not in BLACKLISTED_SERVICES:
 
         streaming_option = StreamingOption(
             movie_id=movie_id,
             country_code=country_code,
-            service_id=streaming_option['service']['id'],
-            link=streaming_option['link'],
-            expires_soon=streaming_option['expiresSoon'],
-            expires_on=streaming_option.get('expiresOn')
+            service_id=streaming_option_data['service']['id'],
+            link=streaming_option_data['link'],
+            expires_soon=streaming_option_data['expiresSoon'],
+            expires_on=streaming_option_data.get('expiresOn')
         )
 
         logger.debug(f'StreamingOption = {streaming_option}.')
