@@ -17,27 +17,29 @@ logger = create_logger(__name__, f'src/logs/{log_file_name}.log')
 # --------------------------------------------------
 
 
-def convert_show_json_into_movie_object(show: dict) -> Movie:
+def convert_show_json_into_movie_object(show: dict, existing_obj: Movie = None) -> Movie:
     """
     Converts Streaming Availability's Show object into a Movie object.
+    An existing Movie can be passed in to update it, instead of creating a new Movie object.
 
     :param show: The JSON Show object retrieved from a response from Streaming Availability.
+    :param existing_obj: A Movie, that was already retrieved from the database, to be updated.
     :return: Movie object.
     """
 
-    movie = Movie(
-        id=show['id'],
-        imdb_id=show['imdbId'],
-        tmdb_id=show['tmdbId'],
-        title=show['title'],
-        overview=show['overview'],
-        release_year=show.get('releaseYear'),
-        original_title=show['originalTitle'],
-        directors=show.get('directors'),
-        cast=show['cast'],
-        rating=show['rating'],
-        runtime=show.get('runtime')
-    )
+    movie = existing_obj or Movie()
+
+    movie.id = show['id']
+    movie.imdb_id = show['imdbId']
+    movie.tmdb_id = show['tmdbId']
+    movie.title = show['title']
+    movie.overview = show['overview']
+    movie.release_year = show.get('releaseYear')
+    movie.original_title = show['originalTitle']
+    movie.directors = show.get('directors')
+    movie.cast = show['cast']
+    movie.rating = show['rating']
+    movie.runtime = show.get('runtime')
 
     logger.debug(f'Movie = {movie}.')
     return movie
@@ -118,12 +120,17 @@ def store_movie_and_streaming_options(show: dict) -> None:
     store_streaming_options(show['streamingOptions'], show['id'])
 
 
-def convert_image_set_json_into_movie_poster_objects(image_set: dict, movie_id: str) -> list[MoviePoster]:
+def convert_image_set_json_into_movie_poster_objects(
+        image_set: dict, movie_id: str, existing_objs: list[MoviePoster] = None
+) -> list[MoviePoster]:
     """
     Converts Streaming Availability's Show object's image set of movie posters into MoviePoster objects.
     Currently, this just takes the vertical posters.
+    A list of existing MoviePosters can be passed in to update them, instead of creating new MoviePoster objects.
 
     :param image_set: The JSON imageSet object within a Show object from Streaming Availability.
+    :param movie_id: The movie ID that the posters belong to.
+    :param existing_objs: List of MoviePosters, retrieved from the database, to be updated.
     :return: A list of MoviePosters.
     """
 
@@ -131,12 +138,22 @@ def convert_image_set_json_into_movie_poster_objects(image_set: dict, movie_id: 
     movie_posters = []
 
     for poster_size, link in image_set[poster_type].items():
-        movie_posters.append(
-            MoviePoster(
-                movie_id=movie_id,
-                type=poster_type,
-                size=poster_size,
-                link=link
-            ))
+        existing_obj = None
+
+        # find MoviePoster in list and pop it
+        # iterating thru list is fine, since there will only be at most 4 types of posters, with 5 sizes for each
+        if existing_objs:
+            for i in range(len(existing_objs)):
+                if existing_objs[i].type == poster_type and existing_objs[i].size == poster_size:
+                    existing_obj = existing_objs.pop(i)
+                    break
+
+        movie_poster = existing_obj or MoviePoster()
+        movie_poster.movie_id = movie_id
+        movie_poster.type = poster_type
+        movie_poster.size = poster_size
+        movie_poster.link = link
+
+        movie_posters.append(movie_poster)
 
     return movie_posters

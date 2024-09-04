@@ -8,10 +8,12 @@ sys.path.append(root_dir)  # nopep8
 
 # --------------------------------------------------
 
+from copy import deepcopy
 from unittest import TestCase
 
-from src.adapters.streaming_availability_adapter import \
-    store_movie_and_streaming_options
+from src.adapters.streaming_availability_adapter import (
+    convert_image_set_json_into_movie_poster_objects,
+    store_movie_and_streaming_options)
 from src.app import create_app
 from src.models.common import connect_db, db
 from src.models.movie import Movie
@@ -31,7 +33,55 @@ db.create_all()
 # --------------------------------------------------
 
 
-class StreamingAvailabilityTestCase(TestCase):
+class StreamingAvailabilityAdapterUnitTests(TestCase):
+    """Unit tests for Streaming Availability Adapter functions."""
+
+    def test_convert_image_set_json_into_movie_poster_objects(self):
+        """
+        Tests that an image set dict created from the JSON imageSet from Streaming Availability API is able to be
+        converted into a list of MoviePosters, and for existing MoviePosters to be updated with that JSON data.
+        """
+
+        poster_type = 'verticalPoster'
+        image_set = {poster_type: {'w240': 'link1', 'w360': 'link2'}}
+        movie_id = '1'
+
+        with self.subTest('When no existing MoviePosters are passed in.'):
+            # Act
+            result = convert_image_set_json_into_movie_poster_objects(deepcopy(image_set), movie_id)
+
+            # Assert
+            self.assertEqual(len(result), len(image_set[poster_type]))
+
+            for movie_poster in result:
+                self.assertEqual(movie_poster.movie_id, movie_id)
+                self.assertEqual(movie_poster.type, poster_type)
+                self.assertIn(movie_poster.size, image_set[poster_type].keys())
+                self.assertIn(movie_poster.link, image_set[poster_type][movie_poster.size])
+
+        with self.subTest('When existing MoviePosters are passed in.'):
+            # Arrange
+            movie_poster_1 = MoviePoster(movie_id=movie_id, type='verticalPoster', size='w240', link='old link1')
+            movie_poster_2 = MoviePoster(movie_id=movie_id, type='verticalPoster', size='w360', link='old link2')
+
+            # Act
+            result = convert_image_set_json_into_movie_poster_objects(
+                deepcopy(image_set), movie_id, [movie_poster_1, movie_poster_2])
+
+            # Assert
+            self.assertEqual(len(result), len(image_set['verticalPoster']))
+
+            for movie_poster in result:
+                self.assertEqual(movie_poster.movie_id, movie_id)
+                self.assertEqual(movie_poster.type, poster_type)
+                self.assertIn(movie_poster.size, image_set[poster_type].keys())
+                self.assertIn(movie_poster.link, image_set[poster_type][movie_poster.size])
+
+            self.assertIs(result[0], movie_poster_1)
+            self.assertIs(result[1], movie_poster_2)
+
+
+class StreamingAvailabilityAdapterIntegTests(TestCase):
     """Tests for functions that interact with Streaming Availability."""
 
     def setUp(self):
