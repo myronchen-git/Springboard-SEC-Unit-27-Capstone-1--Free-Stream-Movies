@@ -75,27 +75,39 @@ def convert_streaming_option_json_into_object(
         return streaming_option
 
 
-def store_streaming_options(streaming_options: dict, movie_id: str) -> None:
+def store_streaming_options(country_streaming_options_data: dict, movie_id: str) -> None:
     """
     Goes through lists of streaming options from within a Show object from Streaming Availability
     and adds them to the database.
 
-    :param streaming_options: The JSON streamingOptions object retrieved within a Show object from Streaming
-        Availability.  This is the plural form, which contains a dictionary of countries, where each country
+    :param country_streaming_options_data: The JSON streamingOptions object retrieved within a Show object from
+        Streaming Availability.  This is the plural form, which contains a dictionary of countries, where each country
         contains lists of streaming options.
-    :param movie_id: The movie ID that this streaming_options belongs to.
+    :param movie_id: The movie ID that this country_streaming_options_data belongs to.
     """
 
-    for country_code, streaming_options in streaming_options.items():
-        for streaming_option in streaming_options:
+    for country_code, streaming_options_data in country_streaming_options_data.items():
+
+        # Deleting old streaming options, since "updated" changes from Streaming Availability API can contain
+        # additions, removals, and modifications.
+        # It is also not easy to find an old StreamingOption, since there can be multiple streaming options
+        # for a movie, country, and streaming service, such as when there are different languages for a movie.
+        # Once there is a change, for example if the link changes, it might not be possible to find the old one.
+        db.session.query(StreamingOption).filter_by(
+            movie_id=movie_id,
+            country_code=country_code
+        ).delete()
+        db.session.commit()
+
+        for streaming_option_data in streaming_options_data:
             streaming_option_object = convert_streaming_option_json_into_object(
-                streaming_option, movie_id, country_code)
+                streaming_option_data, movie_id, country_code)
 
             if streaming_option_object:
-                logger.info(f'Adding {streaming_option_object.movie_id}-'
+                logger.info(f'Adding/updating {streaming_option_object.movie_id}-'
                             f'{streaming_option_object.country_code}-'
                             f'{streaming_option_object.service_id} '
-                            f'streaming option to session.')
+                            f'streaming option to session and database.')
                 db.session.add(streaming_option_object)
 
     db.session.commit()
