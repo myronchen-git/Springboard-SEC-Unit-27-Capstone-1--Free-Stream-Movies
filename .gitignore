@@ -163,4 +163,4 @@ cython_debug/
 
 # custom ignores for app
 .vscode/
-streaming_availability_cursors.json
+src/seed/*.json
