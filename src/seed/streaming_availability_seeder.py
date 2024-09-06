@@ -98,7 +98,7 @@ def seed_services() -> None:
                      f'status code {resp.status_code}: {resp.text}.')
 
 
-def seed_movies_and_streams_from_one_request(country: str, service_id: str, cursor: str = None) -> str | None:
+def seed_movies_and_streams_from_one_request(country: str, service_ids: list[str], cursor: str = None) -> str | None:
     """
     Adds records to the movies and streaming_options tables with data from one API request.
     Returns the next cursor if there are more records to get, or returns 'end' if there aren't.
@@ -108,8 +108,9 @@ def seed_movies_and_streams_from_one_request(country: str, service_id: str, curs
     See https://docs.movieofthenight.com/resource/shows#search-shows-by-filters
 
     :param country: The country code of the country to get data for.
-    :param service_id: The streaming service's ID to get data from.
-    :param cursor: The next cursor (movie) to use for getting the next page of results.  This has the form "ID:NAME".
+    :param service_ids: A list of streaming service IDs to get data for.  This can not be empty.
+    :param cursor: The next cursor (movie) to use for getting the next page of results.
+        This has the form "ID:NAME".
         This would be None if getting the first page of results.
     :return: The next cursor (movie) to start at, if there are more results.
         "end" if there is no more results to get.
@@ -119,9 +120,11 @@ def seed_movies_and_streams_from_one_request(country: str, service_id: str, curs
     # set up variables
     url = "https://streaming-availability.p.rapidapi.com/shows/search/filters"
     headers = {'X-RapidAPI-Key': RAPID_API_KEY}
+
+    catalogs = ', '.join([service_id + '.free' for service_id in service_ids])
     querystring = {"country": country,
                    "order_by": "original_title",
-                   "catalogs": f"{service_id}.free",
+                   "catalogs": catalogs,
                    "show_type": "movie"}
     if cursor:
         querystring['cursor'] = cursor
@@ -151,54 +154,39 @@ def seed_movies_and_streams_from_one_request(country: str, service_id: str, curs
 
 def seed_movies_and_streams() -> None:
     """
-    Adds records to the movies and streaming_options tables for all countries and free streaming services.
+    Adds records to the movies and streaming_options tables for all countries
+    and free streaming services.
 
-    This will save the next cursor (movie), which will get the next page of movie data for a specified country
-    and streaming service.  In other words, there is bookmarking.
+    This will save the next cursor (movie), which will be used to get the next page of
+    movie data for a specified country.  In other words, there is bookmarking.
 
-    Cursors will be in a dictionary containing country codes, where each country code contains service IDs,
-    and each service ID containing the next cursor to use.  This won't contain countries or services
-    that didn't have a next cursor.  It is possible that cursors will be an empty dict.
-    ({country: {service_id: cursor}})
+    Cursors will be in a dictionary containing country codes, where each country code
+    contains the next cursor to use.  It is possible that cursors will be an empty dict.
+    ({country: cursor, country: cursor, ...})
 
     Cursors will be saved into a JSON file.
     """
 
-    # retrieve all countries and services
-    # countries_services = db.session.query(CountryService).all()
-
-    # during development, temporarily get data for US and Tubi instead of all
-    countries_services = db.session.query(
-        CountryService).filter_by(country_code='us', service_id='tubi').all()
+    countries_services = db.session.query(CountryService).all()
+    countries_services = CountryService.convert_list_to_dict(countries_services)
 
     cursors = read_json_file_helper(cursor_file_location)
 
-    for country_service in countries_services:
-        country_code = country_service.country_code
-        service_id = country_service.service_id
-
+    for country_code, service_ids in countries_services.items():
         logger.info(f'Seeding movies and streaming options for '
-                    f'country "{country_code}" and service "{service_id}".')
+                    f'country "{country_code}" and services "{service_ids}".')
 
-        # get cursor for specified country and service if it exists,
-        # else create nested dict structure to simplify code later on
-        # and set cursor to None
-        if country_code in cursors:
-            cursor = cursors[country_code].get(service_id)
-        else:
-            cursors[country_code] = {}
-            cursor = None
+        cursor = cursors.get(country_code)
 
         logger.debug(f'Saved next cursor is: "{cursor}".')
 
         # repeat requests due to Streaming Availability API rate limit
         while cursor != 'end':
             for i in range(STREAMING_AVAILABILITY_API_REQUEST_RATE_LIMIT_PER_SECOND):
-                cursor = seed_movies_and_streams_from_one_request(
-                    country_code, service_id, cursor)
+                cursor = seed_movies_and_streams_from_one_request(country_code, service_ids, cursor)
 
                 if cursor:
-                    cursors[country_code][service_id] = cursor
+                    cursors[country_code] = cursor
                     write_json_file_helper(cursor_file_location, cursors)
 
                 if not cursor or cursor == 'end':
