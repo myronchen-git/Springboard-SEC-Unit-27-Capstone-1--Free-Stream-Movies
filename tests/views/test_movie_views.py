@@ -22,9 +22,8 @@ from src.models.movie_poster import MoviePoster
 from src.models.service import Service
 from src.models.streaming_option import StreamingOption
 from tests.data import show_stargate
-from tests.utility_functions import (movie_generator, movie_poster_generator,
-                                     service_generator,
-                                     streaming_option_generator)
+from tests.utilities import (movie_generator, movie_poster_generator,
+                             service_generator, streaming_option_generator)
 
 # ==================================================
 

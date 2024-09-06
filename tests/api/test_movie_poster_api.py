@@ -16,7 +16,7 @@ from src.app import create_app
 from src.models.common import connect_db, db
 from src.models.movie import Movie
 from src.models.movie_poster import MoviePoster
-from tests.utility_functions import movie_generator, movie_poster_generator
+from tests.utilities import movie_generator, movie_poster_generator
 
 # ==================================================
 

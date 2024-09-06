@@ -20,7 +20,7 @@ from src.models.movie import Movie
 from src.models.movie_poster import MoviePoster
 from src.models.service import Service
 from src.models.streaming_option import StreamingOption
-from tests.utility_functions import service_generator
+from tests.utilities import service_generator
 
 # ==================================================
 

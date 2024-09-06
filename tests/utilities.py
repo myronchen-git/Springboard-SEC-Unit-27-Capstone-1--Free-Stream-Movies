@@ -1,3 +1,6 @@
+from copy import deepcopy
+from unittest.mock import MagicMock
+
 from src.models.movie import Movie
 from src.models.movie_poster import MoviePoster
 from src.models.service import Service
@@ -121,3 +124,23 @@ def streaming_option_generator(n: int, movie_id: str, country_code: str, service
             ))
 
     return output
+
+# ==================================================
+
+
+class CopyingMock(MagicMock):
+    """
+    For copying the arguments given to mocks, since Mocks will only store references.
+
+    This is used for assertions, when determining if the arguments to mock calls are correct.  Originally, when a mock
+    is called with the same mutable argument, the list of call arguments will only show the last value for the mutable
+    argument, no matter the value the mock was given at the time.
+
+    see
+    https://docs.python.org/3/library/unittest.mock-examples.html#coping-with-mutable-arguments
+    """
+
+    def __call__(self, /, *args, **kwargs):
+        args = deepcopy(args)
+        kwargs = deepcopy(kwargs)
+        return super().__call__(*args, **kwargs)
