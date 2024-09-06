@@ -9,6 +9,7 @@ sys.path.append(root_dir)  # nopep8
 # --------------------------------------------------
 
 from copy import deepcopy
+from math import ceil
 from unittest import TestCase
 from unittest.mock import ANY, MagicMock, call, patch
 
@@ -16,8 +17,12 @@ from src.app import create_app
 from src.exceptions.StreamingAvailabilityApiError import \
     StreamingAvailabilityApiError
 from src.models.common import connect_db, db
-from src.seed.streaming_availability_updater import \
-    get_updated_movies_and_streams_from_one_request
+from src.seed.common_constants import \
+    STREAMING_AVAILABILITY_API_REQUEST_RATE_LIMIT_PER_DAY
+from src.seed.streaming_availability_updater import (
+    get_updated_movies_and_streaming_options,
+    get_updated_movies_and_streams_from_one_request)
+from tests.utilities import CopyingMock
 
 # ==================================================
 
@@ -33,10 +38,295 @@ STREAMING_AVAILABILITY_CHANGES_URL = 'https://streaming-availability.p.rapidapi.
 # --------------------------------------------------
 
 
+@patch('src.seed.streaming_availability_updater.write_json_file_helper', new_callable=CopyingMock())
+@patch('src.seed.streaming_availability_updater.get_updated_movies_and_streams_from_one_request', autospec=True)
+@patch('src.seed.streaming_availability_updater.read_json_file_helper', autospec=True)
+@patch('src.seed.streaming_availability_updater.CountryService', autospec=True)
+@patch('src.seed.streaming_availability_updater.db', autospec=True)
+class GetUpdatedMoviesAndStreamingOptionsUnitTests(TestCase):
+    """Unit tests for get_updated_movies_and_streaming_options()."""
+
+    def setUp(self):
+        self.mock_countries_services = MagicMock(name='mock_countries_services')
+
+    def test_get_updates_with_and_without_from_timestamps(
+            self,
+            mock_db,
+            mock_CountryService,
+            mock_read_json_file_helper,
+            mock_get_updated_movies_and_streams_from_one_request,
+            mock_write_json_file_helper
+    ):
+        """Tests that requests to retrieve updates are done with and without the "from" timestamps."""
+
+        # Arrange
+        mock_db.session.query.return_value.all.return_value = self.mock_countries_services
+
+        expected_db_call = call.session.query(mock_CountryService).all().call_list()
+
+        countries_services = {'ca': ['service00', 'service01'],
+                              'us': ['service01', 'service02']}
+        mock_CountryService.convert_list_to_dict.return_value = deepcopy(countries_services)
+
+        mock_get_updated_movies_and_streams_from_one_request.return_value = (False, None)
+
+        # [{condition: ..., expectation: ...}, {condition: ..., expectation: ...}]
+        test_parameters = [{'from_timestamps': {},
+                            'expected_from_timestamp': {'ca': None, 'us': None}},
+                           {'from_timestamps': {'ca': 1000, 'us': 2000},
+                               'expected_from_timestamp': {'ca': 1000, 'us': 2000}}]
+
+        for test_parameter in test_parameters:
+            with self.subTest(from_timestamps=test_parameter['from_timestamps']):
+                # Arrange
+                mock_read_json_file_helper.return_value = test_parameter['from_timestamps']
+
+                # Act
+                get_updated_movies_and_streaming_options()
+
+                # Assert
+                self.assertEqual(mock_db.mock_calls, expected_db_call)
+                mock_CountryService.convert_list_to_dict.assert_called_once_with(self.mock_countries_services)
+                mock_read_json_file_helper.assert_called_once()
+                mock_get_updated_movies_and_streams_from_one_request.assert_has_calls(
+                    [call('ca', countries_services['ca'], test_parameter['expected_from_timestamp']['ca']),
+                     call('us', countries_services['us'], test_parameter['expected_from_timestamp']['us'])]
+                )
+
+                # clean up
+                mock_db.reset_mock()
+                mock_CountryService.reset_mock()
+                mock_read_json_file_helper.reset_mock()
+                mock_get_updated_movies_and_streams_from_one_request.reset_mock()
+
+    def test_get_updates_when_there_are_no_updates(
+            self,
+            mock_db,
+            mock_CountryService,
+            mock_read_json_file_helper,
+            mock_get_updated_movies_and_streams_from_one_request,
+            mock_write_json_file_helper
+    ):
+        """
+        Tests for the condition of when there are no updates, the next "from" timestamp is not saved and no more
+        requests are made.
+
+        Essentially tests that get_updated_movies_and_streams_from_one_request() returns has_more = false and
+        next_from_timestamp = None.
+        """
+
+        # Arrange
+        mock_db.session.query.return_value.all.return_value = self.mock_countries_services
+
+        expected_db_call = call.session.query(mock_CountryService).all().call_list()
+
+        countries_services = {'us': ['service00']}
+        mock_CountryService.convert_list_to_dict.return_value = deepcopy(countries_services)
+
+        mock_read_json_file_helper.return_value = {}
+
+        mock_get_updated_movies_and_streams_from_one_request.return_value = (False, None)
+
+        # Act
+        get_updated_movies_and_streaming_options()
+
+        # Assert
+        self.assertEqual(mock_db.mock_calls, expected_db_call)
+        mock_CountryService.convert_list_to_dict.assert_called_once_with(self.mock_countries_services)
+        mock_read_json_file_helper.assert_called_once()
+        mock_get_updated_movies_and_streams_from_one_request.assert_called_once_with(
+            'us', countries_services['us'], None)
+        mock_write_json_file_helper.assert_not_called()
+
+    def test_get_updates_when_there_is_only_one_page_of_updates(
+            self,
+            mock_db,
+            mock_CountryService,
+            mock_read_json_file_helper,
+            mock_get_updated_movies_and_streams_from_one_request,
+            mock_write_json_file_helper
+    ):
+        """
+        Tests that when getting updates and receiving only one page of updates, the next "from" timestamp is saved and
+        there are no additional requests.
+
+        Essentially tests that get_updated_movies_and_streams_from_one_request() returns has_more = false and
+        next_from_timestamp = int.
+        """
+
+        # Arrange
+        mock_db.session.query.return_value.all.return_value = self.mock_countries_services
+
+        expected_db_call = call.session.query(mock_CountryService).all().call_list()
+
+        countries_services = {'us': ['service00']}
+        mock_CountryService.convert_list_to_dict.return_value = deepcopy(countries_services)
+
+        mock_read_json_file_helper.return_value = {}
+
+        next_from_timestamp = 12345
+        mock_get_updated_movies_and_streams_from_one_request.return_value = (False, next_from_timestamp)
+
+        # Act
+        get_updated_movies_and_streaming_options()
+
+        # Assert
+        self.assertEqual(mock_db.mock_calls, expected_db_call)
+        mock_CountryService.convert_list_to_dict.assert_called_once_with(self.mock_countries_services)
+        mock_read_json_file_helper.assert_called_once()
+        mock_get_updated_movies_and_streams_from_one_request.assert_called_once_with(
+            'us', countries_services['us'], None)
+        mock_write_json_file_helper.assert_called_once_with(ANY, {'us': next_from_timestamp})
+
+        # clean up
+        mock_write_json_file_helper.reset_mock()
+
+    def test_get_updates_when_there_is_more_to_get(
+            self,
+            mock_db,
+            mock_CountryService,
+            mock_read_json_file_helper,
+            mock_get_updated_movies_and_streams_from_one_request,
+            mock_write_json_file_helper
+    ):
+        """
+        Tests that when getting updates and receiving only one page of updates, the next "from" timestamp is saved and
+        there are additional requests.
+
+        Essentially tests that get_updated_movies_and_streams_from_one_request() returns has_more = true and
+        next_from_timestamp = int.
+        """
+
+        # Arrange
+        mock_db.session.query.return_value.all.return_value = self.mock_countries_services
+
+        expected_db_call = call.session.query(mock_CountryService).all().call_list()
+
+        countries_services = {'us': ['service00']}
+        mock_CountryService.convert_list_to_dict.return_value = deepcopy(countries_services)
+
+        mock_read_json_file_helper.return_value = {}
+
+        # return (True, 1000) first, then (False, 2000)
+        mock_get_updated_movies_and_streams_from_one_request.side_effect = \
+            lambda country_code, service_ids, from_timestamp: \
+            (True, 1000) if from_timestamp == None else (False, 2000)
+
+        # Act
+        get_updated_movies_and_streaming_options()
+
+        # Assert
+        self.assertEqual(mock_db.mock_calls, expected_db_call)
+        mock_CountryService.convert_list_to_dict.assert_called_once_with(self.mock_countries_services)
+        mock_read_json_file_helper.assert_called_once()
+        mock_get_updated_movies_and_streams_from_one_request.assert_has_calls([
+            call('us', countries_services['us'], None),
+            call('us', countries_services['us'], 1000)
+        ])
+        mock_write_json_file_helper.assert_has_calls([
+            call(ANY, {'us': 1000}),
+            call(ANY, {'us': 2000})
+        ])
+
+        # clean up
+        mock_write_json_file_helper.reset_mock()
+
+    def test_get_updates_is_within_rate_limits(
+            self,
+            mock_db,
+            mock_CountryService,
+            mock_read_json_file_helper,
+            mock_get_updated_movies_and_streams_from_one_request,
+            mock_write_json_file_helper
+    ):
+        """
+        Tests that the number of requests does not go near the rate limit.  This only considers multiple countries,
+        since total requests for one country will always be less than for multiple countries.
+        """
+
+        # Arrange
+        mock_db.session.query.return_value.all.return_value = self.mock_countries_services
+
+        expected_db_call = call.session.query(mock_CountryService).all().call_list()
+
+        countries_services = {'ca': ['service00', 'service01'],
+                              'us': ['service01', 'service02']}
+        mock_CountryService.convert_list_to_dict.return_value = deepcopy(countries_services)
+
+        mock_read_json_file_helper.return_value = {}
+
+        expected_max_request_count = ceil(STREAMING_AVAILABILITY_API_REQUEST_RATE_LIMIT_PER_DAY * 0.8)
+
+        def side_effect(country_code, service_ids, from_timestamp):
+            if mock_get_updated_movies_and_streams_from_one_request.call_count < expected_max_request_count / 2:
+                return (True, 12345)
+            elif mock_get_updated_movies_and_streams_from_one_request.call_count == \
+                    ceil(expected_max_request_count / 2):
+                return (False, 12345)
+            else:
+                return (True, 12345)
+
+        mock_get_updated_movies_and_streams_from_one_request.side_effect = side_effect
+
+        # Act
+        get_updated_movies_and_streaming_options()
+
+        # Assert
+        self.assertEqual(mock_db.mock_calls, expected_db_call)
+        mock_CountryService.convert_list_to_dict.assert_called_once_with(self.mock_countries_services)
+        mock_read_json_file_helper.assert_called_once()
+        self.assertEqual(mock_get_updated_movies_and_streams_from_one_request.call_count,
+                         expected_max_request_count)
+        mock_get_updated_movies_and_streams_from_one_request.assert_any_call('ca', countries_services['ca'], 12345)
+        mock_get_updated_movies_and_streams_from_one_request.assert_any_call('us', countries_services['us'], 12345)
+        self.assertEqual(mock_write_json_file_helper.call_count,
+                         expected_max_request_count)
+        mock_write_json_file_helper.assert_called_with(ANY, {'ca': 12345, 'us': 12345})
+
+        # clean up
+        mock_write_json_file_helper.reset_mock()
+
+    def test_get_updates_returns_error(
+            self,
+            mock_db,
+            mock_CountryService,
+            mock_read_json_file_helper,
+            mock_get_updated_movies_and_streams_from_one_request,
+            mock_write_json_file_helper
+    ):
+        """
+        If a Streaming Availability API call results in an error, then exit without saving the next
+        "from" timestamp and do not make additional calls.
+        """
+
+        # Arrange
+        mock_db.session.query.return_value.all.return_value = self.mock_countries_services
+
+        expected_db_call = call.session.query(mock_CountryService).all().call_list()
+
+        countries_services = {'us': ['service00']}
+        mock_CountryService.convert_list_to_dict.return_value = deepcopy(countries_services)
+
+        mock_read_json_file_helper.return_value = {}
+
+        mock_get_updated_movies_and_streams_from_one_request.side_effect = StreamingAvailabilityApiError("")
+
+        # Act
+        get_updated_movies_and_streaming_options()
+
+        # Assert
+        self.assertEqual(mock_db.mock_calls, expected_db_call)
+        mock_CountryService.convert_list_to_dict.assert_called_once_with(self.mock_countries_services)
+        mock_read_json_file_helper.assert_called_once()
+        mock_get_updated_movies_and_streams_from_one_request.assert_called_once_with(
+            'us', countries_services['us'], None)
+        mock_write_json_file_helper.assert_not_called()
+
+
 @patch('src.seed.streaming_availability_updater.store_movie_and_streaming_options', autospec=True)
 @patch('src.seed.streaming_availability_updater.requests', autospec=True)
 @patch('src.seed.streaming_availability_updater.RAPID_API_KEY')
-class StreamingAvailabilityUpdaterGetUpdatedMoviesAndStreamsFromOneRequestUnitTests(TestCase):
+class GetUpdatedMoviesAndStreamsFromOneRequestUnitTests(TestCase):
     """Unit tests for get_updated_movies_and_streams_from_one_request()."""
 
     def setUp(self):

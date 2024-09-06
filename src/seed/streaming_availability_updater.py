@@ -8,13 +8,22 @@ sys.path.append(root_dir)  # nopep8
 
 # --------------------------------------------------
 
+import time
+
 import requests
 
 from src.adapters.streaming_availability_adapter import \
     store_movie_and_streaming_options
-from src.app import RAPID_API_KEY
+from src.app import RAPID_API_KEY, create_app
 from src.exceptions.StreamingAvailabilityApiError import \
     StreamingAvailabilityApiError
+from src.models.common import connect_db, db
+from src.models.country_service import CountryService
+from src.seed.common_constants import (
+    STREAMING_AVAILABILITY_API_REQUEST_RATE_LIMIT_PER_DAY,
+    STREAMING_AVAILABILITY_API_REQUEST_RATE_LIMIT_PER_SECOND)
+from src.util.file_handling import (read_json_file_helper,
+                                    write_json_file_helper)
 from src.util.logger import create_logger
 
 # ==================================================
@@ -24,6 +33,51 @@ next_timestamps_file_location = 'src/seed/streaming_availability_updater_next_ti
 logger = create_logger(__name__, 'src/logs/update.log')
 
 # --------------------------------------------------
+
+
+def get_updated_movies_and_streaming_options() -> None:
+    """
+    Updates records for movies and streaming options for all countries and free streaming services. This will
+    make multiple calls to Streaming Availability API, up to 80% of the daily limit.
+
+    This will retrieve and save the next timestamps to start at.  The timestamps will be saved into a JSON file.
+    Timestamps will be in the format {country: timestamp}, because all streaming services at SA API will be queried for
+    a given country.  If a new service is introduced in SA API, its movies will be added at a later timestamp, and
+    therefore, will be covered using this format.
+    """
+
+    countries_services = db.session.query(CountryService).all()
+    countries_services = CountryService.convert_list_to_dict(countries_services)
+
+    from_timestamps = read_json_file_helper(next_timestamps_file_location)
+
+    num_requests = 0
+    for country_code, service_ids in countries_services.items():
+        has_more = True
+
+        while has_more:
+            for i in range(STREAMING_AVAILABILITY_API_REQUEST_RATE_LIMIT_PER_SECOND):
+                try:
+                    has_more, next_from_timestamp = get_updated_movies_and_streams_from_one_request(
+                        country_code, service_ids, from_timestamps.get(country_code))
+                except StreamingAvailabilityApiError:
+                    return
+
+                num_requests += 1
+
+                if next_from_timestamp:
+                    from_timestamps[country_code] = next_from_timestamp
+                    write_json_file_helper(next_timestamps_file_location, from_timestamps)
+
+                if num_requests >= STREAMING_AVAILABILITY_API_REQUEST_RATE_LIMIT_PER_DAY * 0.8:
+                    return
+
+                if not has_more:
+                    break
+
+            if has_more:
+                # sleep needed due to Streaming Availability API request rate limit per second
+                time.sleep(1)
 
 
 def get_updated_movies_and_streams_from_one_request(
@@ -105,3 +159,10 @@ def get_updated_movies_and_streams_from_one_request(
 
 
 # ==================================================
+
+
+if __name__ == "__main__":
+    app = create_app("freestreammovies")
+    connect_db(app)
+    with app.app_context():
+        get_updated_movies_and_streaming_options()
