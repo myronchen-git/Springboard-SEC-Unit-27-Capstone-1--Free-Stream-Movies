@@ -8,7 +8,7 @@ $(document).ready(() => {
 
     $(".section-service__div-movies").on(
         "click",
-        ".bi-arrow-left-circle-fill, .bi-arrow-right-circle-fill",
+        "div:has(> .bi-arrow-left), div:has(> .bi-arrow-right)",
         { countryCode },
         handleServiceMoviesPageChange
     );
@@ -90,15 +90,15 @@ function buildMoviesDiv(element, moviePageData, moviePosterData) {
         $(element).attr("data-page", moviePageData["page"]);
 
         if (moviePageData["has_prev"]) {
-            $(element).find(".bi-arrow-left-circle-fill").removeClass("bi-arrow--hidden");
+            $(element).find(".bi-arrow-left").removeClass("bi-arrow--hidden");
         } else {
-            $(element).find(".bi-arrow-left-circle-fill").addClass("bi-arrow--hidden");
+            $(element).find(".bi-arrow-left").addClass("bi-arrow--hidden");
         }
 
         if (moviePageData["has_next"]) {
-            $(element).find(".bi-arrow-right-circle-fill").removeClass("bi-arrow--hidden");
+            $(element).find(".bi-arrow-right").removeClass("bi-arrow--hidden");
         } else {
-            $(element).find(".bi-arrow-right-circle-fill").addClass("bi-arrow--hidden");
+            $(element).find(".bi-arrow-right").addClass("bi-arrow--hidden");
         }
 
         if (moviePageData.items.length === 0) {
@@ -137,15 +137,15 @@ function buildMoviesDiv(element, moviePageData, moviePosterData) {
  */
 async function handleServiceMoviesPageChange(event) {
     const delegateTarget = event.delegateTarget;
-    const arrow = event.target;
+    const arrowButton = event.target;
     const currentPage = parseInt(delegateTarget.dataset.page);
     const serviceId = delegateTarget.dataset.service;
     const countryCode = event.data.countryCode;
 
     let pageToLoad;
-    if (arrow.classList.contains("bi-arrow-left-circle-fill")) {
+    if (arrowButton.querySelector(".bi-arrow-left")) {
         pageToLoad = currentPage - 1;
-    } else if (arrow.classList.contains("bi-arrow-right-circle-fill")) {
+    } else if (arrowButton.querySelector(".bi-arrow-right")) {
         pageToLoad = currentPage + 1;
     }
 

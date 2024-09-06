@@ -330,8 +330,8 @@ describe("buildMoviesDiv", () => {
         // Assert
         const page = parseInt($(element).attr("data-page"));
         expect(page).toBe(moviePageData["page"]);
-        expect($(element).children(".bi-arrow-left-circle-fill").hasClass("bi-arrow--hidden")).toBeTrue();
-        expect($(element).children(".bi-arrow-right-circle-fill").hasClass("bi-arrow--hidden")).toBeTrue();
+        expect($(element).find(".bi-arrow-left").hasClass("bi-arrow--hidden")).toBeTrue();
+        expect($(element).find(".bi-arrow-right").hasClass("bi-arrow--hidden")).toBeTrue();
 
         const liElements = $(element).find(".section-service__list-movies > li");
         expect(liElements.length).toBe(this.items.length);
@@ -362,8 +362,8 @@ describe("buildMoviesDiv", () => {
         // Assert
         const page = parseInt($(element).attr("data-page"));
         expect(page).toBe(moviePageData["page"]);
-        expect($(element).children(".bi-arrow-left-circle-fill").hasClass("bi-arrow--hidden")).toBeFalse();
-        expect($(element).children(".bi-arrow-right-circle-fill").hasClass("bi-arrow--hidden")).toBeTrue();
+        expect($(element).find(".bi-arrow-left").hasClass("bi-arrow--hidden")).toBeFalse();
+        expect($(element).find(".bi-arrow-right").hasClass("bi-arrow--hidden")).toBeTrue();
 
         const liElements = $(element).find(".section-service__list-movies > li");
         expect(liElements.length).toBe(this.items.length);
@@ -392,8 +392,8 @@ describe("buildMoviesDiv", () => {
         buildMoviesDiv(element, moviePageData, this.moviePosterData);
 
         // Assert
-        expect($(element).children(".bi-arrow-left-circle-fill").hasClass("bi-arrow--hidden")).toBeFalse();
-        expect($(element).children(".bi-arrow-right-circle-fill").hasClass("bi-arrow--hidden")).toBeTrue();
+        expect($(element).find(".bi-arrow-left").hasClass("bi-arrow--hidden")).toBeFalse();
+        expect($(element).find(".bi-arrow-right").hasClass("bi-arrow--hidden")).toBeTrue();
     });
 
     it("should build the correct arrows when there is only a next page.", () => {
@@ -411,8 +411,8 @@ describe("buildMoviesDiv", () => {
         buildMoviesDiv(element, moviePageData, this.moviePosterData);
 
         // Assert
-        expect($(element).children(".bi-arrow-left-circle-fill").hasClass("bi-arrow--hidden")).toBeTrue();
-        expect($(element).children(".bi-arrow-right-circle-fill").hasClass("bi-arrow--hidden")).toBeFalse();
+        expect($(element).find(".bi-arrow-left").hasClass("bi-arrow--hidden")).toBeTrue();
+        expect($(element).find(".bi-arrow-right").hasClass("bi-arrow--hidden")).toBeFalse();
     });
 
     it("should build the correct arrows when there is a prev and next page.", () => {
@@ -430,8 +430,8 @@ describe("buildMoviesDiv", () => {
         buildMoviesDiv(element, moviePageData, this.moviePosterData);
 
         // Assert
-        expect($(element).children(".bi-arrow-left-circle-fill").hasClass("bi-arrow--hidden")).toBeFalse();
-        expect($(element).children(".bi-arrow-right-circle-fill").hasClass("bi-arrow--hidden")).toBeFalse();
+        expect($(element).find(".bi-arrow-left").hasClass("bi-arrow--hidden")).toBeFalse();
+        expect($(element).find(".bi-arrow-right").hasClass("bi-arrow--hidden")).toBeFalse();
     });
 
     it("should display no movies when movie page data contains no movies.", () => {
@@ -453,8 +453,8 @@ describe("buildMoviesDiv", () => {
         // Assert
         const page = parseInt($(element).attr("data-page"));
         expect(page).toBe(moviePageData["page"]);
-        expect($(element).children(".bi-arrow-left-circle-fill").hasClass("bi-arrow--hidden")).toBeTrue();
-        expect($(element).children(".bi-arrow-right-circle-fill").hasClass("bi-arrow--hidden")).toBeTrue();
+        expect($(element).find(".bi-arrow-left").hasClass("bi-arrow--hidden")).toBeTrue();
+        expect($(element).find(".bi-arrow-right").hasClass("bi-arrow--hidden")).toBeTrue();
 
         expect($(element).text()).toContain("No movies found");
     });
@@ -561,11 +561,11 @@ describe("handleServiceMoviesPageChange", () => {
         const expectedPageToLoad = page - 1;
 
         const moviesListDiv = $("<div>").attr("data-service", serviceId).attr("data-page", page)[0];
-        const arrowElement = $("<i>").addClass("bi-arrow-left-circle-fill")[0];
+        const arrowButtonContainer = $("<div>").append($("<i>").addClass("bi-arrow-left"))[0];
 
         const event = jQuery.Event("click", {
             delegateTarget: moviesListDiv,
-            target: arrowElement,
+            target: arrowButtonContainer,
             data: { countryCode },
         });
 
@@ -600,11 +600,11 @@ describe("handleServiceMoviesPageChange", () => {
         const expectedPageToLoad = page + 1;
 
         const moviesListDiv = $("<div>").attr("data-service", serviceId).attr("data-page", page)[0];
-        const arrowElement = $("<i>").addClass("bi-arrow-right-circle-fill")[0];
+        const arrowButtonContainer = $("<div>").append($("<i>").addClass("bi-arrow-right"))[0];
 
         const event = jQuery.Event("click", {
             delegateTarget: moviesListDiv,
-            target: arrowElement,
+            target: arrowButtonContainer,
             data: { countryCode },
         });
 
@@ -643,14 +643,22 @@ describe("handleServiceMoviesPageChange", () => {
  */
 function createTestDivHelper(serviceId) {
     return $(`
-    <div class="section-service__div-movies" data-service="${serviceId}">
-        <i class="bi bi-arrow-left-circle-fill bi-arrow--hidden"></i>
-        <ul class="section-service__list-movies">
-            <li>
-                Loading Movies...
-            </li>
-        </ul>
-        <i class="bi bi-arrow-right-circle-fill bi-arrow--hidden"></i>
-    </div>
+        <div class="section-service__div-movies card-body container" data-service="${serviceId}">
+            <div class="row">
+                <div class="col-auto p-0">
+                    <i class="bi bi-arrow-left p-2 bi-arrow--hidden"></i>
+                </div>
+                <div class="col container text-center">
+                    <ul class="section-service__list-movies row m-0 list-unstyled">
+                        <li class="col">
+                            <p class="p-5 m-0">Loading Movies...</p>
+                        </li>
+                    </ul>
+                </div>
+                <div class="col-auto p-0">
+                    <i class="bi bi-arrow-right p-2 bi-arrow--hidden"></i>
+                </div>
+            </div>
+        </div>
     `);
 }

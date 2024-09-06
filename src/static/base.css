@@ -47,3 +47,19 @@ body {
     min-width: 320px;
     background-color: var(--color-tertiary);
 }
+
+div:has(> .bi) {
+    background-color: var(--color-primary);
+    border-radius: 0.25em;
+    display: flex;
+    align-items: center;
+}
+
+div:has(> .bi):hover {
+    cursor: pointer;
+}
+
+.bi:not(.bi-arrow--hidden) {
+    color: var(--color-tertiary);
+    font-size: 2em;
+}
