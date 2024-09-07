@@ -1,0 +1,243 @@
+webcams.travel
+
+original idea for website that displays menu items, but use spoonacular to display ingredient images and restaurant info.
+would need to create my own API to store menu item info.
+translates ingredient names to other languages.
+
+do something with google apis
+
+database for tracking movies that were streamed for free.  use streaming availability api.
+
+https://www.callcontrol.com/documentation/#IdentifyAPI
+
+HaveIBeenPwned
+https://haveibeenpwned.com/API/v3
+
+https://github.com/Revadike/InternalSteamWebAPI
+https://stackoverflow.com/questions/45029182/how-use-steam-api-send-tradeoffer#
+Create a website that replaces the archaic and slow steam trade window.  There seems to be a way to get inventory items, but the trade offer POST request may not work.
+
+https://spacetraders.io/
+Create a visual website to play Space Traders.
+
+==================================================================================
+
+streaming free movies:
+affiliate program for customers to sign up with subscription
+find country by ip address and provide movies available in that country.
+
+User Authentication and Authorization:
+
+    Allow users to create accounts and log in securely.
+    Implement roles (admin, regular user) with appropriate permissions.
+
+Movie Listings:
+
+    Display a catalog of free streaming movies with details such as title, description, genre, rating, etc.
+    Allow users to browse and search for movies based on various criteria (genre, year, rating, etc.).
+
+Movie Details:
+
+    Show detailed information about each movie, including synopsis, release year, duration, director, cast, etc.
+    Provide links to where the movie can be streamed for free.
+
+User Interaction:
+
+    Allow users to rate and review movies.
+    Implement a favorite or watchlist feature where users can save movies they are interested in.
+
+External APIs Integration:
+
+    Integrate with external APIs (such as IMDb, TMDB, or streaming service APIs) to fetch movie data dynamically.
+    Use APIs to check for availability of movies on different streaming platforms.
+
+Recommendation System:
+
+    Implement a recommendation engine that suggests movies based on user preferences or viewing history.
+    Provide personalized recommendations for users based on their interactions with the site.
+
+Social Features:
+
+    Enable social features such as sharing movie recommendations on social media.
+    Implement a commenting system for users to discuss movies.
+
+Admin Panel:
+
+    Create an admin dashboard to manage movies (add, edit, delete).
+    Monitor user activity and manage user accounts.
+
+Responsive Design:
+
+    Ensure the website is mobile-friendly and works well on different devices and screen sizes.
+
+Advanced Search and Filtering:
+
+    Provide advanced search options such as filtering by language, country, awards, etc.
+    Implement sorting options for search results (e.g., by popularity, release date).
+
+Notifications:
+
+    Notify users about new movies added, recommended movies, or updates to their favorite movies.
+
+Analytics and Reporting:
+
+    Track and analyze user interactions (e.g., most viewed movies, popular genres).
+    Generate reports on user activity or movie trends.
+
+Security Features:
+
+    Implement HTTPS, secure authentication practices, and protection against common web vulnerabilities (SQL injection, XSS, CSRF).
+
+Localization:
+
+    Support multiple languages and regional preferences for movie details.
+
+Backend Tasks:
+
+    Schedule periodic tasks (like fetching updated movie data) using background jobs or task queues.
+
+==================================================================================
+
+1)
+It is difficult to find what movies are available to be streamed for free.  Users can visit individual websites like Tubi, Plex, and Amazon Prime Video and go through their lists, but information is fragmented.
+
+Create a website that consolidates lists of all the free movies across multiple platforms.  Data will include movie titles, covers, and streaming platforms.  It should include searching, and filtering by release date and etc.  It might include watchlisting and email notification of when a particular movie becomes free.
+
+2)
+Traditional restaurant menus often do not have pictures displaying menu items.  People have to guess what the food is like, from the list of ingredients.  Sometimes the menu is in a different language too.  Pictures help to quickly allow people to determine if the food is something they will like.  Yelp provides this feature, but the pictures are usually not labeled properly or follow a consistent standard.
+
+My website will allow users to search for a restaurant, display each menu item and their ingredients (if available), and provide that info in as many languages as possible.  A new API would need to be created, with most content being provided by users (community driven).  It might include allowing users to rate photos.  Data will also include restaurant information, such as location and phone number.
+
+3)
+E-commerce Platform
+
+Description: Develop a simple e-commerce platform where users can browse products, add them to cart, and checkout. Use Flask for backend logic, PostgreSQL for product and order data, and integrate with a payment gateway API (like Stripe API).
+
+Features: User registration/authentication, product catalog with search and filter, shopping cart functionality, checkout process with payment integration, order history for users, responsive product listings and checkout flow.
+
+==================================================================================
+
+In Streaming Availability API:
+Use "Get Changes" endpoint to get movies that were free in the past and movies that will be free soon.
+
+Allow users to search TMDB for any movie for viewing movie info, free or not, and if not free, allow users to put into watchlist.
+
+Front page will display rows of websites (tubitv, pluto tv, freevee, youtube) and the free movies on those websites.
+
+==================================================================================
+
+Core Features
+
+    Social Sharing:
+        Enable users to share movie pages on social media platforms directly from the website.
+
+    Movie Trailers:
+        Embed trailers for movies on their detail pages.
+
+Advanced Features
+
+    Personalized Recommendations:
+        Use machine learning algorithms to recommend movies to users based on their watch history.
+
+    Movie Collections:
+        Curate and display themed movie collections (e.g., "Best Action Movies," "Top Romantic Comedies").
+
+    Advanced Search Filters:
+        Include more search filters such as language, subtitle availability, and director.
+
+Stretch Goals
+
+    Integrated Streaming:
+        If feasible, allow users to watch movies directly on your site through embedded players (subject to licensing).
+
+    Parental Controls:
+        Implement a system for parents to filter out movies based on age-appropriateness.
+
+Technical Enhancements
+
+    Progressive Web App (PWA):
+        Convert your website into a PWA to enhance user experience on mobile devices.
+
+    Caching for Faster Load Times:
+        Implement caching strategies to speed up the website.
+
+    Error Handling and User Feedback:
+        Add comprehensive error handling and user feedback for actions (e.g., "Movie added to watchlist").
+
+    Analytics Dashboard:
+        Create an admin dashboard to track user engagement and site performance metrics.
+
+
+
+Core Features
+
+    User Profiles:
+        Detailed user profiles where users can manage their watchlists and notification preferences.
+
+    Movie Ratings Integration:
+        Integrate movie ratings from external sources like IMDb or Rotten Tomatoes.
+
+    Release Calendar:
+        A calendar feature that shows upcoming free movie releases and availability dates.
+
+    Trending Movies:
+        Display lists of trending or most-watched free movies on the homepage.
+
+    Offline Mode:
+        Allow users to save lists of movies to view offline (details and availability, not the actual movies).
+
+Advanced Features
+
+    Multi-Language Support:
+        Provide multilingual support for a global audience.
+
+    Dark Mode:
+        Implement a dark mode for a better viewing experience at night.
+
+    User Activity Log:
+        Keep a log of user activity, such as searches and movie views, to improve recommendations.
+
+    Dynamic Movie Suggestions:
+        Suggest similar movies based on the one currently being viewed.
+
+Stretch Goals
+
+    Custom Lists:
+        Allow users to create and share custom lists of movies (e.g., "My Favorite Comedies").
+
+    Streaming Quality Indicator:
+        Show streaming quality options (e.g., 720p, 1080p) for each movie provider.
+
+    Bookmarklets or Browser Extensions:
+        Create a bookmarklet or browser extension to quickly add movies to the watchlist from other sites.
+
+Technical Enhancements
+
+    API Rate Limiting and Throttling:
+        Implement rate limiting and throttling to handle high traffic and ensure fair use of external APIs.
+
+    Automated Testing Suite:
+        Set up an automated testing suite for continuous integration and deployment (CI/CD).
+
+    Scalability and Load Balancing:
+        Design the system to scale efficiently with load balancing and clustering.
+
+    SEO Optimization:
+        Optimize the website for search engines to increase visibility and attract more users.
+
+    Data Visualization:
+        Use data visualization tools to create engaging charts and graphs about movie trends, user engagement, etc.
+
+Miscellaneous
+
+    Content Curation:
+        Regularly update and curate lists of movies based on themes, holidays, or special events.
+
+    Feedback System:
+        Implement a feedback system for users to report bugs or suggest new features.
+
+    Accessibility Features:
+        Ensure the site is accessible to users with disabilities, following WCAG guidelines.
+
+    Geolocation-Based Suggestions:
+        Use geolocation to suggest movies and streaming services available in the user's region.

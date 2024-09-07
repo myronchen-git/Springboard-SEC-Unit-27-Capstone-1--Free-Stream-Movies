@@ -1,3 +1,69 @@
+# Free Stream Movies
+
+url placeholder
+
+A website for finding free movies to stream.
+
+## Overview
+
+This web app shows a list of streaming services that provide currently available free movies to stream. Users can
+choose which country to show options for, view movie details, and search movie titles to see if a particular title
+is free.
+
+## Features
+
+-   Allow selecting a country to display free movies for. The choice will be saved in a browser cookie.
+    -   The movie data isn't restricted only to the United States. To allow everyone to benefit, and to not needlessly
+        show streaming options a user can not use, movies are displayed in accordance to country, with users being
+        able to select the country. This allows the web app to be used across the world.
+-   List streaming services that provide free streaming options, and their movies.
+    -   This is the main feature of the the website. This shows what movies are available for free on what streaming
+        providers. This allows people to easily find free movies, instead of trying to find the movies by going through
+        lists of paid and subscription options, or filtering for free options.
+-   Search all movies by title.
+    -   Allows users to easily find a specific movie, to see if it is free or to see its info.
+-   Movie details page, which also displays list of links to streaming options.
+    -   Shows detailed info such as release year, cast, and runtime. Also shows all of the free streaming options
+        across different streaming providers.
+-   User accounts.
+    -   Allows for future features such as adding movies to watchlists and emailing users when a movie becomes free.
+-   Viewable on mobile devices and on desktops.
+    -   Most people view websites on their phones. Having the web app work well on both small and large screens allows
+        it to be accessible to a wider audience.
+-   Database is easily updatable with new data from the external API.
+    -   Free streaming options do not last forever. To keep the displayed movies current, a developer can run a file
+        to call the API and to save the retrieved data into the database.
+
+## User Flow
+
+On the homepage, streaming providers are shown with their movies. For each streaming provider, a max of 20 movies are
+shown at a time. Users can click on the left and right arrows to scroll the movie options for a provider. Streaming
+providers with no free streaming options are not shown.
+
+Users can select a country from the navigation bar, which will then reload the webpage and populate the list of
+streaming services and movies for that country.
+
+Clicking on a movie will go to the movie details page and show movie info like release year, rating, runtime,
+description, directors, and cast. The details page will also show the list of free streaming options, if there are
+any, and whether the options are expiring soon. Clicking on an option from a streaming provider will redirect to that
+provider's movie's page.
+
+At the top, in the navigation bar, users can type in a movie title to search for. Upon sending a search request, a
+new page is displayed with a list of movie results, along with their descriptions. Clicking on a result leads to the
+details page.
+
+To create an account, users can click on the "Register" link in the navbar at the top-right. A form is displayed
+with fields username, password, repeat password, and email. If username or email is not unique, or if the repeated
+password is not the same as the first password inputted, an error will be shown.
+
+If users already have an account, they can log in through the "Login" link in the navbar at the top-right.
+
+After registering or logging in, users will be redirected to the homepage. Users will stay logged in after closing
+their browsers.
+
+If logged in, the "Register" and "Login" links will not be shown. Instead, the "Logout" link will be shown. Users can
+click on the "Logout" link in the navbar to log out.
+
 ## External APIs
 
 ### Streaming Availability API
@@ -5,59 +71,29 @@
 https://www.movieofthenight.com/about/api/  
 https://rapidapi.com/movie-of-the-night-movie-of-the-night-default/api/streaming-availability
 
-# Capstone Project One
+This has a limited number of streaming services.
 
-We have broken down the Capstone Project into easy-to-follow steps. Each step of the capstone contains a link with instructions for that step. Here’s a quick overview of what you’ll do for each step of your capstone project:
+## Tech Stack
 
-1. Step One: Initial Project Ideas: You’ll pick up to 3 project ideas to propose to your mentor and the Springboard community. You’ll also explore some potential APIs.
-2. Step Two: Project Proposal: For this step, you’ll write a proposal for the site you want to build. This will help your mentor better understand your chosen capstone project idea.
-3. Step Three: Schema Design and API Selection: After your mentor approves of your capstone project proposal, you’ll figure out the database design of your application and which API you’ll be using.
-4. Step Four: Coding User Flows: Once you’ve figured out what you’re building, you’ll write the code to implement it. It’s important to think about what you want a user’s experience to be like as they navigate your site.
-5. Step Five: Polishing Your Application: Once you have the core functionality implemented, you’ll focus on additional UI enhancements and styling for your application.
-6. Step Six: Documenting and Submission: You’ve done a lot of work so now it’s time to show your mentor your progress! Create a README in markdown, make sure your GitHub is organized, and submit your finalized project.
+-   Python
+-   Flask
+-   PostgresQL
+-   Flask-SQLAlchemy
+-   Flask-Bcrypt
+-   Flask-Login
+-   Flask-WTF (WTForms)
+-   Jinja
+-   HTML
+-   CSS
+-   JavaScript
+-   JQuery
+-   Axios
+-   Bootstrap
 
-## Overview
+## Other
 
-For your first Capstone Project, you’ll build a database-driven website off an external
-API of your choice. Your finished capstone will be an integral part of your portfolio; it will demonstrate to potential employers everything you’ve learned from this course.
+Project Ideas:
+https://docs.google.com/document/d/1EYCoiANIPEsIVZTgVDpPSY2jYtedfrGOQlAPqVkLT3o/edit?usp=sharing
 
-We want you to work on a challenging project that will incorporate all of the back-end
-skills you’ve been developing and some of your front-end skills from the last section.
-The goal of this project isn’t to create something that’s never been done before. You
-could potentially create a website similar to one that already exists, or use a popular
-API. That being said, we do encourage you to be creative when building your site. You’re free to choose any API you’d like to use and we encourage you to tap into your
-imagination throughout the project.
-
-There is a term in software development called CRUD - Create, Read, Update, Delete. This refers to all of the basic operations that a relational database performs. Your website should have more functionality than simple CRUD.
-
-## Examples
-
-There are thousands of free, publically available APIs. If you love cars, you can pick
-from dozens of automotive APIs to build something that will reflect your passion. If you’re more into history, look into an API that lists the nobility of Europe. If you love sports, build a site about India’s top cricketers or your local football league.
-
-Let’s give you an example of what a site could look like. Say you choose an API like The
-Movie Database, your site could have a landing page saying “Welcome To MyMovieDB” and a separate page that displays a sortable list of all the movies in the API. This would be CRUD.
-
-You could implement various filtering methods - to filter based on an actor, a director,
-the year the movie was released, etc. When you click on the record associated with the movie, you could redirect a user to a separate page that displays all of the data
-associated with that movie.
-
-Now let’s talk about bells and whistles. If you were to implement ONE feature like
-creating sharable lists of your favorite movies, finding and playing a trailer for the movie on-page, or a simple “recommendation system” that would recommend new movies based on similarities to movies you liked, this would go beyond CRUD. A simple
-“recommendation system” would be along the lines of, if you like Big Daddy with Adam
-Sandler, recommending other Adam Sandler comedies from the 90s or recommending
-movies his co-stars like Steve Buscemi starred in. This does not mean creating a
-complicated system from scratch like Netflix.
-
-It is better to pick a project that errs on the side of simple and boring than a complex
-project with a million moving parts you can get stuck in.
-
-[Here is an example of a previous project.](https://github.com/juliahazer/chart-my-team)
-
-## Guidelines
-
-1. You will use the following technologies in this project: Python/Flask, PostgreSQL, SQLAlchemy, Heroku, Jinja, RESTful APIs, JavaScript, HTML, CSS. Depending on your idea, you might end up using WTForms and other technologies discussed in the course.
-2. Every step of the project has submissions. This will alert your mentor to evaluate your work. Pay attention to the instructions so you submit the right thing. You will submit the link to your GitHub repo several times, this is for your mentor’s convenience. Your URL on GitHub is static and will not change.
-3. The first two steps require mentor approval to proceed, but after that, you are free to continue working on the project after you submit your work. For instance, you don’t need your mentor to approve your database schema before you start working on your site. Likewise, you don’t need your mentor to approve the first iteration of your site before you start polishing it.
-4. If you get stuck, there is a wealth of resources at your disposal. The course contains all of the material you will need to complete this project, but a well-phrased Google search might yield you an immediate solution to your problem. Don’t forget that your Slack community, TAs, and your mentor there to help you out.
-5. Make sure you use a free API and deploy your project on Heroku , so everyone can see your work!
+Proposal:
+https://docs.google.com/document/d/1WoXzewIRBwGr2g7bMLV0evk-s5cDGe1VeVO0oxh2WJI/edit?usp=sharing

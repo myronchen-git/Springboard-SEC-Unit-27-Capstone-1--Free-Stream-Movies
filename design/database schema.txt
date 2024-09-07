@@ -14,7 +14,7 @@ Table services {
 }
 
 Table countries_services {
-  country_code string [primary key]
+  country_code string(2) [primary key]
   service_id text [primary key, ref: <> services.id]
 }
 
@@ -32,7 +32,7 @@ Table movies {
   runtime integer
 }
 
-Table posters {
+Table movie_posters {
   movie_id text [primary key, ref: > movies.id]
   type text [primary key]
   size string(4) [primary key]
