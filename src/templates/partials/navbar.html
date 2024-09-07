@@ -15,14 +15,14 @@
     </button>
 
     <div class="collapse navbar-collapse" id="navbarMain">
-      <ul class="navbar-nav w-100 d-flex">
+      <ul class="navbar-nav w-100 d-flex align-items-md-center">
 
         <li class="nav-item p-0">
           <!-- placeholder for future webpages -->
         </li>
 
         <li class="nav-item p-0 flex-grow-1 my-auto">
-          <div class="container-fluid">
+          <div class="container-fluid p-0 my-2 my-md-0">
             <div class="row">
               <div class="col col-md-6 mx-auto">
                 <form action="{{ url_for('search_titles') }}" role="search">
@@ -46,7 +46,7 @@
         </li>
 
         <li class="nav-item p-0">
-          <form id="form-country-selection">
+          <form id="form-country-selection" class="my-2 my-md-0">
             <select class="form-select" aria-label="Select Country">
               <option value="ae" title="United Arab Emirates">🇦🇪 سع</option>
               <option value="ar" title="Argentina">🇦🇷 AR</option>
