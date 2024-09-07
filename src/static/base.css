@@ -59,7 +59,8 @@ div:has(> .bi):hover {
     cursor: pointer;
 }
 
-.bi:not(.bi-arrow--hidden) {
+.bi-arrow-left:not(.bi-arrow--hidden),
+.bi-arrow-right:not(.bi-arrow--hidden) {
     color: var(--color-tertiary);
     font-size: 2em;
 }
