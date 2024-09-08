@@ -14,8 +14,8 @@ import flask_login
 import requests
 from dotenv import load_dotenv
 from flask import Flask, flash, redirect, render_template, request, url_for
-from flask_debugtoolbar import DebugToolbarExtension
-from flask_login import LoginManager, login_user
+# from flask_debugtoolbar import DebugToolbarExtension
+from flask_login import LoginManager
 
 from src.adapters.streaming_availability_adapter import (
     convert_show_json_into_movie_object, store_movie_and_streaming_options)
@@ -277,6 +277,7 @@ def create_app(db_name, testing=False):
 # ==================================================
 
 
+# for starting a server for development
 if __name__ == "__main__":
     app = create_app("freestreammovies")
     connect_db(app)
