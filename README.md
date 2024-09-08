@@ -1,6 +1,6 @@
 # Free Stream Movies
 
-[Website URL](https://myron-chens-springboard-capstone-1-free.onrender.com/)
+https://myron-chen-free-stream-movies.onrender.com/
 
 A website for finding free movies to stream.
 
