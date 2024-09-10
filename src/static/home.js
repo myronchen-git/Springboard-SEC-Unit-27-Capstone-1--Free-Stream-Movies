@@ -137,7 +137,7 @@ function buildMoviesDiv(element, moviePageData, moviePosterData) {
  */
 async function handleServiceMoviesPageChange(event) {
     const delegateTarget = event.delegateTarget;
-    const arrowButton = event.target;
+    const arrowButton = event.currentTarget;
     const currentPage = parseInt(delegateTarget.dataset.page);
     const serviceId = delegateTarget.dataset.service;
     const countryCode = event.data.countryCode;

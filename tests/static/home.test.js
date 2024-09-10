@@ -565,7 +565,7 @@ describe("handleServiceMoviesPageChange", () => {
 
         const event = jQuery.Event("click", {
             delegateTarget: moviesListDiv,
-            target: arrowButtonContainer,
+            currentTarget: arrowButtonContainer,
             data: { countryCode },
         });
 
@@ -604,7 +604,7 @@ describe("handleServiceMoviesPageChange", () => {
 
         const event = jQuery.Event("click", {
             delegateTarget: moviesListDiv,
-            target: arrowButtonContainer,
+            currentTarget: arrowButtonContainer,
             data: { countryCode },
         });
 
