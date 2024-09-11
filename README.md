@@ -97,3 +97,120 @@ https://docs.google.com/document/d/1EYCoiANIPEsIVZTgVDpPSY2jYtedfrGOQlAPqVkLT3o/
 
 Proposal:
 https://docs.google.com/document/d/1WoXzewIRBwGr2g7bMLV0evk-s5cDGe1VeVO0oxh2WJI/edit?usp=sharing
+
+## How To Set Up And Run
+
+### Running Locally
+
+1. Create a `.env` file in the root directory and include
+
+    - `SECRET_KEY` (secret key for Flask app)
+    - `RAPID_API_KEY` (API key for using Streaming Availability API)
+
+2. Seed local database by running
+
+    > py src/seed/streaming_availability_seeder.py
+
+    May need to manually uncomment/comment functions at bottom of file to choose what data to seed with.
+    Due to external API rate limits, the seeding will have to be done repeatedly over a few days.
+
+3. Start app by running
+
+    > py src/app.py
+
+4. Occasionally update local database by running
+
+    > py src/seed/streaming_availability_updater.py
+
+### Running On A Web Host
+
+The [Render](https://render.com/) server and [Supabase](https://supabase.com/) database hosting sites
+will be used as examples.
+
+A local database with data is needed beforehand.
+
+#### On Supabase:
+
+1. Create a new Organization and Project.
+
+2. Select region.
+
+3. Create a password for database access.
+
+4. Create project and wait until it is completed.
+
+5. Go to **Project Settings > Database > Connection string > PSQL**, and copy PSQL string.
+
+6. Dump local database into Supabase by opening terminal and running
+
+    > pg_dump -U {PostgreSQL user with permission} -O {local database name} | {PSQL string}
+
+    - This seems to only work for new Supabase databases.
+
+7. Input password for database dump.
+
+#### On Render:
+
+1. Create a web service on Render and connect it to this repository. As of now, use branch `dev`, but in the future,
+   this might change to `main`.
+
+2. Give the service a globally unique name.
+
+3. Set the build command to install dependencies using the `requirements.txt` file in the root directory.
+   This should be the default.
+
+4. Set the start command to
+
+    > gunicorn prod_server:app.
+
+5. Set environment variables:
+
+    1. `DATABASE_URL` = URL from Supabase
+    2. `PYTHON_VERSION` = 3.12.4
+
+6. In the "Secret Files" section, create a file named `.env` and add
+
+    - `SECRET_KEY` (secret key for Flask app)
+    - `RAPID_API_KEY` (API key for using Streaming Availability API)
+
+7. Create the web service.
+
+### How To Update Supabase with local database
+
+#### Using pgAdmin:
+
+1. First get Supabase database connection string info.
+
+    - For a project, **Project Settings > Database > Connection string > Python**.
+
+2. In pgAdmin's Object Explorer window, right-click and select **Servers > Register > Server**.
+
+3. Under General tab, input name.
+
+4. Under Connection tab, input/change the following by using the Supabase connection info.
+
+    - Host name/address
+    - Port
+    - Username
+    - Password (database's)
+    - Enable Save Password
+
+5. Save the new server.
+
+6. In Object Explorer, right-click on **{local server} > Databases > {local database name}** and select **Backup...**.
+
+7. Under General tab, input name.
+
+8. Under Data Options tab, do not save Owner and Privileges.
+
+9. Click Backup.
+
+10. In Object Explorer, right-click on **{new server} > Databases > postgres** and select **Restore...**.
+
+11. Under General tab, select and input Filename for backup.
+
+12. Under Data Options tab, do not save Owner and Privileges.
+
+13. Under Query Options, enable "Clean before restore".
+
+14. Click Restore.
