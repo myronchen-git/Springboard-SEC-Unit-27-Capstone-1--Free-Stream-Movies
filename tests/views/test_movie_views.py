@@ -10,12 +10,13 @@ sys.path.append(root_dir)  # nopep8
 
 from types import MappingProxyType
 from unittest import TestCase
-from unittest.mock import MagicMock, patch
+from unittest.mock import ANY, MagicMock, patch
 from urllib import parse
 
 from flask import url_for
 
-from src.app import COOKIE_COUNTRY_CODE_NAME, create_app
+from src.app import (COOKIE_COUNTRY_CODE_NAME, STREAMING_AVAILABILITY_BASE_URL,
+                     create_app)
 from src.models.common import connect_db, db
 from src.models.movie import Movie
 from src.models.movie_poster import MoviePoster
@@ -43,8 +44,8 @@ db.create_all()
 
 
 @patch('src.app.requests', autospec=True)
-class MovieSearchViewTestCase(TestCase):
-    """Tests for views involving movie searches.  This currently involves real network calls to API."""
+class MovieSearchViewIntegrationTests(TestCase):
+    """Integration tests for views involving movie searches.  This mocks calls to external API."""
 
     def test_search_title(self, mock_requests):
         """Tests for successfully searching for a movie title and displaying results."""
@@ -120,10 +121,45 @@ class MovieSearchViewTestCase(TestCase):
 
             mock_requests.assert_not_called()
 
+    def test_search_title_with_ext_api_return_not_200(self, mock_requests):
+        """When the external API returns a status that is not 200, an error should be displayed in the HTML. """
+
+        # Arrange
+        url = url_for("search_titles")
+        country_code = 'us'
+        title = "Stargate"
+        query_string = {"title": title}
+
+        status_code = 404
+        reason = "Not Found"
+
+        mock_response = MagicMock(name='mock_response')
+        mock_response.status_code = status_code
+        mock_response.reason = reason
+        mock_requests.get.return_value = mock_response
+
+        expected_api_url = f"{STREAMING_AVAILABILITY_BASE_URL}/shows/search/title"
+        expected_api_params = {"country": country_code,
+                               "title": title,
+                               "show_type": "movie"}
+
+        # Act
+        with app.test_client() as client:
+            client.set_cookie(COOKIE_COUNTRY_CODE_NAME, country_code)
+            resp = client.get(url, query_string=query_string)
+            html = resp.get_data(as_text=True)
+
+        # Assert
+            self.assertEqual(resp.status_code, status_code)
+            self.assertIn(str(status_code), html)
+            self.assertIn(reason, html)
+
+            mock_requests.get.assert_called_once_with(expected_api_url, headers=ANY, params=expected_api_params)
+
 
 @patch('src.app.requests', autospec=True)
-class MovieDetailsViewTestCase(TestCase):
-    """Tests for the view of a movie's details page.  This currently involves real network calls to API."""
+class MovieDetailsViewIntegrationTests(TestCase):
+    """Integration tests for the view of a movie's details page.  This mocks calls to external API."""
 
     def setUp(self):
         db.session.query(StreamingOption).delete()
@@ -255,3 +291,34 @@ class MovieDetailsViewTestCase(TestCase):
             self.assertIn(f'alt="{show_stargate['title']} Poster"', html)
 
             mock_requests.get.assert_called_once()
+
+    def test_movie_details_page_for_nonexistent_movie(self, mock_requests):
+        """Tests displaying an error in the HTML if a movie ID does not belong to a movie."""
+
+        # Arrange
+        country_code = 'us'
+        movie_id = '0'
+        url = url_for('movie_details_page', movie_id=movie_id)
+
+        status_code = 404
+        reason = "Not Found"
+
+        mock_response = MagicMock(name='mock_response')
+        mock_response.status_code = status_code
+        mock_response.reason = reason
+        mock_requests.get.return_value = mock_response
+
+        expected_api_url = f"{STREAMING_AVAILABILITY_BASE_URL}/shows/{movie_id}"
+
+        # Act
+        with app.test_client() as client:
+            client.set_cookie(COOKIE_COUNTRY_CODE_NAME, country_code)
+            resp = client.get(url, follow_redirects=True)
+            html = resp.get_data(as_text=True)
+
+        # Assert
+            self.assertEqual(resp.status_code, status_code)
+            self.assertIn(str(status_code), html)
+            self.assertIn(reason, html)
+
+            mock_requests.get.assert_called_once_with(expected_api_url, headers=ANY)

@@ -145,7 +145,11 @@ def create_app(db_name, testing=False):
 
     @login_manager.unauthorized_handler
     def unauthorized_handler():
-        return 'Unauthorized', 401
+        return render_template(
+            'error.html',
+            status_code=401,
+            message='Unauthorized'
+        ), 401
 
     # --------------------------------------------------
     # api
@@ -227,8 +231,11 @@ def create_app(db_name, testing=False):
             return render_template("movies/search_results.html", movies=movies)
 
         else:
-            # temp, replace with custom error
-            return "Error", resp.status_code
+            return render_template(
+                'error.html',
+                status_code=resp.status_code,
+                message=resp.reason
+            ), resp.status_code
 
     @app.route('/movie/<movie_id>')
     def movie_details_page(movie_id):
@@ -252,8 +259,11 @@ def create_app(db_name, testing=False):
                 movie = convert_show_json_into_movie_object(show)
 
             else:
-                # temp, replace with custom error
-                return "Error", resp.status_code
+                return render_template(
+                    'error.html',
+                    status_code=resp.status_code,
+                    message=resp.reason
+                ), resp.status_code
 
         country_code = request.cookies.get(COOKIE_COUNTRY_CODE_NAME, DEFAULT_COUNTRY_CODE)
         streaming_options = db.session.query(StreamingOption).filter_by(
