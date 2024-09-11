@@ -36,8 +36,8 @@ db.create_all()
 
 _USER_REGISTRATION_DATA_1 = MappingProxyType({
     "username": "testuser1",
-    "password": "password",
-    "repeated_password": "password",
+    "password": "Aa1!123",
+    "repeated_password": "Aa1!123",
     "email": "test1@test.com",
 })
 
@@ -152,6 +152,36 @@ class UserRegistrationViewTestCase(TestCase):
                 num_users = db.session.query(User).count()
                 self.assertEqual(num_users, 0)
 
+    def test_registering_user_with_invalid_password(self):
+        """Tests that attempting to register with an invalid password should fail."""
+
+        # Arrange
+        url = url_for("register_user")
+
+        password_data_list = ['1' * (User.MIN_PASS_LENGTH - 1),  # too short
+                              '123456q1!',  # missing uppercase
+                              '123456Q1!',  # missing lowercase
+                              'abcdQq!',  # missing number
+                              '123456Qq1',]  # missing special character
+
+        for password in password_data_list:
+            with self.subTest(password=password):
+                data = dict(_USER_REGISTRATION_DATA_1)
+                data['password'] = password
+                data['repeated_password'] = password
+
+                # Act
+                with app.test_client() as client:
+                    resp = client.post(url, data=data, follow_redirects=True)
+                    html = resp.get_data(as_text=True)
+
+                # Assert
+                self.assertIn("User Registration</h1>", html)
+                self.assertIn(f'Password must contain at least one', html)
+
+                num_users = db.session.query(User).count()
+                self.assertEqual(num_users, 0)
+
     def test_registering_user_with_mismatched_password_confirmation(self):
         """Tests that registering with mismatching password and repeated password should fail."""
 
@@ -183,8 +213,8 @@ class UserRegistrationViewTestCase(TestCase):
         ]
         user_data_2 = MappingProxyType({
             "username": "testuser2",
-            "password": "password",
-            "repeated_password": "password",
+            "password": "Aa1!123",
+            "repeated_password": "Aa1!123",
             "email": "test2@test.com",
         })
 
@@ -317,6 +347,23 @@ class UserLoginViewTestCase(TestCase):
                     self.assertIn("Invalid credentials.", html)
 
                     self.assertNotIsInstance(current_user, User)
+
+    def test_login_user_with_password_too_short(self):
+        """Logging in with a password that is too short should fail."""
+
+        url = url_for("login_user")
+        data = {"username": _USER_REGISTRATION_DATA_1['username'],
+                "password": "1" * (User.MIN_PASS_LENGTH - 1)}
+
+        # Act
+        with app.test_client() as client:
+            resp = client.post(url, data=data, follow_redirects=True)
+            html = resp.get_data(as_text=True)
+
+        # Assert
+            self.assertIn(f'Field must be at least {User.MIN_PASS_LENGTH} characters long.', html)
+
+            self.assertNotIsInstance(current_user, User)
 
 
 class UserLogoutTestCase(TestCase):

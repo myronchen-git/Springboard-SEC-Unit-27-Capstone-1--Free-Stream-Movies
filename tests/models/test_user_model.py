@@ -31,13 +31,13 @@ db.create_all()
 
 _USER_DATA_1 = MappingProxyType({
     "username": "testuser1",
-    "password": "HASHED_PASSWORD",
+    "password": "Qq4$po",
     "email": "test1@test.com",
 })
 
 _USER_DATA_2 = MappingProxyType({
     "username": "testuser2",
-    "password": "HASHED_PASSWORD",
+    "password": "Qq4$po",
     "email": "test2@test.com",
 })
 
@@ -200,6 +200,28 @@ class UserRegistrationTestCase(TestCase):
             with self.subTest(required_property=property):
                 data = dict(_USER_DATA_1)
                 data[property] = ""
+
+        # Act/Assert
+                self.assertRaises(UserRegistrationError, User.register, data)
+
+        # clean up
+                # needed since subtest is not a true parametrized test
+                db.session.rollback()
+
+    def test_user_registration_with_invalid_password(self):
+        """Tests that registering with an invalid password should raise an exception."""
+
+        # Arrange
+        password_data_list = ['1' * (User.MIN_PASS_LENGTH - 1),  # too short
+                              '123456q1!',  # missing uppercase
+                              '123456Q1!',  # missing lowercase
+                              'abcdQq!',  # missing number
+                              '123456Qq1',]  # missing special character
+
+        for password in password_data_list:
+            with self.subTest(password=password):
+                data = dict(_USER_DATA_1)
+                data['password'] = password
 
         # Act/Assert
                 self.assertRaises(UserRegistrationError, User.register, data)

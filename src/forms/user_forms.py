@@ -1,6 +1,8 @@
 from flask_wtf import FlaskForm
 from wtforms import EmailField, PasswordField, StringField
-from wtforms.validators import EqualTo, InputRequired
+from wtforms.validators import EqualTo, InputRequired, Length, Regexp
+
+from src.models.user import User
 
 # ==================================================
 
@@ -12,8 +14,12 @@ class RegisterUserForm(FlaskForm):
         InputRequired(message="Username is required.")],
         render_kw={"placeholder": "username"})
 
-    password = PasswordField("Password", validators=[
-        InputRequired(message="Password is required.")],
+    password = PasswordField(
+        "Password",
+        validators=[
+            InputRequired(message="Password is required."),
+            Regexp(User.PASSWORD_REGEX_PATTERN, message=User.PASSWORD_REQUIREMENTS_TEXT)
+        ],
         render_kw={"placeholder": "password"})
 
     repeated_password = PasswordField("Repeat Password", validators=[
@@ -34,5 +40,6 @@ class LoginUserForm(FlaskForm):
         render_kw={"placeholder": "username"})
 
     password = PasswordField("Password", validators=[
-        InputRequired(message="Password is required.")],
+        InputRequired(message="Password is required."),
+        Length(User.MIN_PASS_LENGTH)],
         render_kw={"placeholder": "password"})

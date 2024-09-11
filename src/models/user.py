@@ -1,3 +1,4 @@
+import re
 from typing import Self
 
 from flask_bcrypt import Bcrypt
@@ -17,6 +18,21 @@ bcrypt = Bcrypt()
 
 class User(db.Model, UserMixin):
     """Represents a user."""
+
+    MIN_PASS_LENGTH = 6
+
+    # password regex:
+    # https://stackoverflow.com/a/21456918
+    _ESCAPED_SYMBOLS = re.escape(r"""!@#$%^&*()-=[];',./_+{}:"<>?""")
+    PASSWORD_REGEX_PATTERN = (rf'^(?=.*[a-z])'
+                              rf'(?=.*[A-Z])'
+                              rf'(?=.*\d)'
+                              rf'(?=.*[{_ESCAPED_SYMBOLS}])'
+                              rf'[A-Za-z\d{_ESCAPED_SYMBOLS}]{{{MIN_PASS_LENGTH},}}$')
+
+    PASSWORD_REQUIREMENTS_TEXT = ('Password must contain at least one uppercase letter, '
+                                  'one lowercase letter, one number, one special character, '
+                                  f'and be at least {MIN_PASS_LENGTH} characters long.')
 
     __tablename__ = 'users'
 
@@ -80,6 +96,9 @@ class User(db.Model, UserMixin):
         # Put user data into new dictionary if data is a table column, other than ID, and if value is truthy.
         data = {k: v for k, v in user_data.items()
                 if k in cls.__table__.columns and k != 'id' and v}
+
+        if not re.match(cls.PASSWORD_REGEX_PATTERN, data["password"]):
+            raise UserRegistrationError(cls.PASSWORD_REQUIREMENTS_TEXT)
 
         data["password"] = bcrypt.generate_password_hash(
             data["password"]).decode("utf8")
