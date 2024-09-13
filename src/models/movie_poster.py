@@ -1,6 +1,8 @@
 from enum import StrEnum
 from typing import Self
 
+from sqlalchemy.dialects import postgresql
+
 from src.exceptions.UnrecognizedValueError import UnrecognizedValueError
 from src.models.common import db
 
@@ -97,3 +99,28 @@ class MoviePoster(db.Model):
             output.update({movie_poster.movie_id: movie_posters_of_movie_id})
 
         return output
+
+    @classmethod
+    def upsert_database(cls, attributes: list[dict]) -> None:
+        """
+        Use a list of dictionaries, where each dictionary contains all the attributes for one movie poster,
+        and inserts new movie posters into the PostgreSQL database.  If a poster already exists, it will be
+        overwritten with the new data.
+
+        This performs an session.execute(), which will later need to be committed.
+
+        :param attributes: A list of dicts.  A dict contains movie_id, type, size, and link for keys.
+            Values are poster data to put into database.
+        """
+
+        if len(attributes) > 0:
+            stmt = postgresql.insert(cls).values(attributes)
+
+            columns_to_replace = {'link': stmt.excluded.link}
+
+            stmt = stmt.on_conflict_do_update(
+                constraint=f'{cls.__tablename__}_pkey',
+                set_=columns_to_replace
+            )
+
+            db.session.execute(stmt)

@@ -8,10 +8,13 @@ sys.path.append(root_dir)  # nopep8
 
 # --------------------------------------------------
 
+from copy import deepcopy
 from unittest import TestCase
 
 from src.app import create_app
 from src.models.common import connect_db, db
+from src.models.movie import Movie
+from src.models.service import Service
 from src.models.streaming_option import StreamingOption
 from tests.utilities import (movie_generator, service_generator,
                              streaming_option_generator)
@@ -28,14 +31,18 @@ db.create_all()
 # --------------------------------------------------
 
 
-class StreamingOptionTestCase(TestCase):
-    """Tests for StreamingOption model."""
+class StreamingOptionIntegrationTestsGetStreamingOptions(TestCase):
+    """Tests for StreamingOption.get_streaming_options()."""
 
     COUNTRY_CODE = "us"
     SERVICE_01_ID = "service00"  # see util.py -> service_generator() for name format
 
     @classmethod
     def setUpClass(cls):
+        db.session.query(Service).delete()
+        db.session.query(Movie).delete()
+        db.session.commit()
+
         service = service_generator(1)[0]
         movie = movie_generator(1)[0]
         cls.movie_id = movie.id
@@ -58,7 +65,8 @@ class StreamingOptionTestCase(TestCase):
 
         # Act
         page = StreamingOption.get_streaming_options(
-            StreamingOptionTestCase.COUNTRY_CODE, StreamingOptionTestCase.SERVICE_01_ID)
+            self.COUNTRY_CODE,
+            self.SERVICE_01_ID)
 
         # Assert
         self.assertEqual(len(page.items), 0)
@@ -75,16 +83,17 @@ class StreamingOptionTestCase(TestCase):
         # Arrange
         streaming_options = streaming_option_generator(
             1,
-            StreamingOptionTestCase.movie_id,
-            StreamingOptionTestCase.COUNTRY_CODE,
-            StreamingOptionTestCase.SERVICE_01_ID
+            self.movie_id,
+            self.COUNTRY_CODE,
+            self.SERVICE_01_ID
         )
         db.session.add_all(streaming_options)
         db.session.commit()
 
         # Act
         page = StreamingOption.get_streaming_options(
-            StreamingOptionTestCase.COUNTRY_CODE, StreamingOptionTestCase.SERVICE_01_ID)
+            self.COUNTRY_CODE,
+            self.SERVICE_01_ID)
 
         # Assert
         self.assertEqual(len(page.items), len(streaming_options))
@@ -106,18 +115,20 @@ class StreamingOptionTestCase(TestCase):
         # Arrange
         streaming_options = streaming_option_generator(
             21,
-            StreamingOptionTestCase.movie_id,
-            StreamingOptionTestCase.COUNTRY_CODE,
-            StreamingOptionTestCase.SERVICE_01_ID
+            self.movie_id,
+            self.COUNTRY_CODE,
+            self.SERVICE_01_ID
         )
         db.session.add_all(streaming_options)
         db.session.commit()
 
         # Act
         page1 = StreamingOption.get_streaming_options(
-            StreamingOptionTestCase.COUNTRY_CODE, StreamingOptionTestCase.SERVICE_01_ID)
+            self.COUNTRY_CODE,
+            self.SERVICE_01_ID)
         page2 = StreamingOption.get_streaming_options(
-            StreamingOptionTestCase.COUNTRY_CODE, StreamingOptionTestCase.SERVICE_01_ID, 2)
+            self.COUNTRY_CODE,
+            self.SERVICE_01_ID, 2)
 
         # Assert
         self.assertEqual(len(page1.items), 20)
@@ -138,3 +149,89 @@ class StreamingOptionTestCase(TestCase):
         self.assertFalse(page2.has_next)
 
     # More tests are needed for cases where there are other movies, services, or streaming options.
+
+
+class StreamingOptionIntegrationTestsInsertDatabase(TestCase):
+    """Tests for StreamingOption.insert_database()."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.country_code = 'us'
+
+        db.session.query(Service).delete()
+        db.session.query(Movie).delete()
+        db.session.commit()
+
+        service = service_generator(1)[0]
+        cls.service_id = service.id
+        movie = movie_generator(1)[0]
+        cls.movie_id = movie.id
+
+        db.session.add_all((service, movie))
+        db.session.commit()
+
+    def setUp(self):
+        db.session.query(StreamingOption).delete()
+        db.session.commit()
+
+    def tearDown(self):
+        db.session.rollback()
+
+    def test_insert_new_streaming_options(self):
+        """Inserting new streaming options should store them in the database."""
+
+        # Arrange
+        num_streaming_options = 2
+
+        streaming_options_data = []
+        for streaming_option in streaming_option_generator(
+                num_streaming_options,
+                self.movie_id,
+                self.country_code,
+                self.service_id):
+            data = {}
+            for attr in StreamingOption.__table__.columns.keys():
+                data[attr] = getattr(streaming_option, attr)
+            streaming_options_data.append(data)
+
+        # Act
+        StreamingOption.insert_database(deepcopy(streaming_options_data))
+        db.session.commit()
+
+        # Assert
+        streaming_options = db.session.query(StreamingOption).all()
+
+        self.assertEqual(len(streaming_options), num_streaming_options)
+
+        for i in range(num_streaming_options):
+            for attr in StreamingOption.__table__.columns.keys():
+                if attr != 'id':
+                    self.assertEqual(getattr(streaming_options[i], attr), streaming_options_data[i][attr],
+                                     msg=(f'Assertion failed for '
+                                          f'subtest(num_streaming_options = {num_streaming_options}) '
+                                          f'-> streaming option item {i} -> attribute "{attr}".'))
+
+    def test_insert_no_streaming_options(self):
+        """When inserting no streaming options, the database should remain unchanged."""
+
+        # Arrange
+        streaming_options_data = []
+
+        initial_streaming_options = streaming_option_generator(
+            2,
+            self.movie_id,
+            self.country_code,
+            self.service_id)
+        db.session.add_all(initial_streaming_options)
+        db.session.commit()
+
+        # Act
+        StreamingOption.insert_database(streaming_options_data)
+        db.session.commit()
+
+        # Assert
+        streaming_options = db.session.query(StreamingOption).all()
+
+        self.assertEqual(len(streaming_options), len(initial_streaming_options))
+
+        self.assertEqual(streaming_options, initial_streaming_options)

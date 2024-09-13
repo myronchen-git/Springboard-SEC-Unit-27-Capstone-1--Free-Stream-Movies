@@ -74,3 +74,29 @@ class Movie(db.Model):
         """Show info about movie."""
 
         return "{}({!r})".format(self.__class__.__name__, self.__dict__)
+
+    @classmethod
+    def upsert_database(cls, attributes: list[dict]) -> None:
+        """
+        Use a list of dictionaries, where each dictionary contains all the attributes for one movie (including id),
+        and inserts new movies into the PostgreSQL database.  If a movie already exists, it will be overwritten
+        with the new data.
+
+        This performs an session.execute(), which will later need to be committed.
+
+        :param attributes: A list of dicts.  A dict contains id, imdb_id, tmdb_id, ... for keys.  Values are movie
+            data to put into database.
+        """
+
+        if len(attributes) > 0:
+            stmt = postgresql.insert(cls).values(attributes)
+
+            # all columns except id
+            columns_to_replace = {name: column for name, column in stmt.excluded.items() if name != 'id'}
+
+            stmt = stmt.on_conflict_do_update(
+                constraint=f'{cls.__tablename__}_pkey',
+                set_=columns_to_replace
+            )
+
+            db.session.execute(stmt)

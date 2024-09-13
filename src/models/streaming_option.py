@@ -1,6 +1,7 @@
 import json
 
 from flask_sqlalchemy.pagination import Pagination
+from sqlalchemy import insert
 
 from src.models.common import db
 from src.models.movie import Movie
@@ -94,3 +95,21 @@ class StreamingOption(db.Model):
             )\
             .order_by(Movie.rating.desc())\
             .paginate(page=page)
+
+    @classmethod
+    def insert_database(cls, attributes: list[dict]) -> None:
+        """
+        Use a list of dictionaries, where each dictionary contains all the attributes for one streaming option,
+        and inserts new streaming options into the PostgreSQL database.
+
+        This performs an session.execute(), which will later need to be committed.
+
+        :param attributes: A list of dicts.  A dict contains movie_id, country_code, service_id, ... for keys.
+            Values are streaming option data to put into database.
+        """
+
+        if len(attributes) > 0:
+            db.session.execute(
+                insert(cls),
+                attributes
+            )

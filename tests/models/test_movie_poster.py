@@ -8,6 +8,8 @@ sys.path.append(root_dir)  # nopep8
 
 # --------------------------------------------------
 
+import pdb
+from copy import deepcopy
 from unittest import TestCase
 from unittest.mock import call, patch
 
@@ -237,3 +239,128 @@ class MoviePosterIntegrationTestsGetMoviePosters(TestCase):
         result_sizes = {movie_poster.size for movie_poster in result}
         for size in sizes:
             self.assertIn(size, result_sizes)
+
+
+class MoviePosterIntegrationTestsUpsertDatabase(TestCase):
+    """Integration tests for MoviePoster.upsert_database()."""
+
+    @classmethod
+    def setUpClass(cls):
+        db.session.query(Movie).delete()
+
+        cls.movies = movie_generator(2)
+        db.session.add_all(cls.movies)
+
+        db.session.commit()
+
+    def setUp(self):
+        db.session.query(MoviePoster).delete()
+        db.session.commit()
+
+    def tearDown(self):
+        db.session.rollback()
+
+    def test_insert_new_movie_posters(self):
+        """For one and many movie posters, inserting new movie posters should store them in the database."""
+
+        # Arrange
+        # This is outside, because one call generates enough posters, only data is extracted from them, and no
+        # MoviePosters are committed to the database (therefore no flushing of objects).
+        generated_movie_posters = movie_poster_generator([self.movies[0].id])
+
+        for num_movie_posters in range(1, 3):
+            with self.subTest(num_movie_posters=num_movie_posters):
+
+                movie_posters_data = []
+
+                for movie_poster in generated_movie_posters[:num_movie_posters]:
+                    data = {}
+                    for attr in MoviePoster.__table__.columns.keys():
+                        data[attr] = getattr(movie_poster, attr)
+                    movie_posters_data.append(data)
+
+                # Act
+                MoviePoster.upsert_database(deepcopy(movie_posters_data))
+                db.session.commit()
+
+                # Assert
+                movie_posters = db.session.query(MoviePoster).all()
+
+                self.assertEqual(len(movie_posters), num_movie_posters)
+
+                for i in range(num_movie_posters):
+                    for attr in MoviePoster.__table__.columns.keys():
+                        self.assertEqual(getattr(movie_posters[i], attr), movie_posters_data[i][attr],
+                                         msg=(f'Assertion failed for subtest(num_movie_posters = {num_movie_posters}) '
+                                              f'-> movie poster item {i} -> attribute "{attr}".'))
+
+                # clean up
+                db.session.rollback()
+                db.session.query(MoviePoster).delete()
+                db.session.commit()
+
+    def test_update_existing_movie_posters(self):
+        """For one and many movie posters, inserting posters for existing posters should update them in the database."""
+
+        # Arrange
+        for num_movie_posters in range(1, 3):
+            with self.subTest(num_movie_posters=num_movie_posters):
+
+                generated_movie_posters = movie_poster_generator([self.movies[0].id])
+
+                initial_movie_posters = generated_movie_posters[:num_movie_posters]
+                db.session.add_all(initial_movie_posters)
+
+                updated_movie_posters_data = []
+                for i in range(len(initial_movie_posters)):
+                    data = {}
+                    for attr in MoviePoster.__table__.columns.keys():
+                        if attr == 'link':
+                            data[attr] = getattr(initial_movie_posters[i], attr) + '/newlink'
+                        else:
+                            data[attr] = getattr(initial_movie_posters[i], attr)
+                    updated_movie_posters_data.append(data)
+
+                # This is at the end, because after committing, MoviePosters are flushed, and all data will be lost.
+                db.session.commit()
+
+                # Act
+                MoviePoster.upsert_database(deepcopy(updated_movie_posters_data))
+                db.session.commit()
+
+                # Assert
+                movie_posters = db.session.query(MoviePoster).all()
+
+                self.assertEqual(len(movie_posters), num_movie_posters)
+
+                for i in range(num_movie_posters):
+                    for attr in MoviePoster.__table__.columns.keys():
+                        self.assertEqual(getattr(movie_posters[i], attr), updated_movie_posters_data[i][attr],
+                                         msg=(f'Assertion failed for subtest(num_movie_posters = {num_movie_posters}) '
+                                              f'-> movie poster item {i} -> attribute "{attr}".'))
+
+                # clean up
+                db.session.rollback()
+                db.session.query(MoviePoster).delete()
+                db.session.commit()
+
+    def test_upsert_no_movie_posters(self):
+        """When upserting no movie posters, the database should remain unchanged."""
+
+        # Arrange
+        movie_posters_data = []
+
+        initial_movie_posters = movie_poster_generator([self.movies[0].id])[:2]
+        db.session.add_all(initial_movie_posters)
+        db.session.commit()
+
+        # Act
+        MoviePoster.upsert_database(movie_posters_data)
+        db.session.commit()
+
+        # Assert
+        movie_posters = db.session.query(MoviePoster).all()
+
+        self.assertEqual(len(movie_posters), len(initial_movie_posters))
+
+        self.assertEqual(movie_posters, initial_movie_posters)
