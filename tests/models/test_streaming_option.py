@@ -34,16 +34,16 @@ db.create_all()
 class StreamingOptionIntegrationTestsGetStreamingOptions(TestCase):
     """Tests for StreamingOption.get_streaming_options()."""
 
-    COUNTRY_CODE = "us"
-    SERVICE_01_ID = "service00"  # see util.py -> service_generator() for name format
-
     @classmethod
     def setUpClass(cls):
+        cls.country_code = 'us'
+
         db.session.query(Service).delete()
         db.session.query(Movie).delete()
         db.session.commit()
 
         service = service_generator(1)[0]
+        cls.service_id = service.id
         movie = movie_generator(1)[0]
         cls.movie_id = movie.id
 
@@ -65,8 +65,8 @@ class StreamingOptionIntegrationTestsGetStreamingOptions(TestCase):
 
         # Act
         page = StreamingOption.get_streaming_options(
-            self.COUNTRY_CODE,
-            self.SERVICE_01_ID)
+            self.country_code,
+            self.service_id)
 
         # Assert
         self.assertEqual(len(page.items), 0)
@@ -84,16 +84,16 @@ class StreamingOptionIntegrationTestsGetStreamingOptions(TestCase):
         streaming_options = streaming_option_generator(
             1,
             self.movie_id,
-            self.COUNTRY_CODE,
-            self.SERVICE_01_ID
+            self.country_code,
+            self.service_id
         )
         db.session.add_all(streaming_options)
         db.session.commit()
 
         # Act
         page = StreamingOption.get_streaming_options(
-            self.COUNTRY_CODE,
-            self.SERVICE_01_ID)
+            self.country_code,
+            self.service_id)
 
         # Assert
         self.assertEqual(len(page.items), len(streaming_options))
@@ -116,19 +116,19 @@ class StreamingOptionIntegrationTestsGetStreamingOptions(TestCase):
         streaming_options = streaming_option_generator(
             21,
             self.movie_id,
-            self.COUNTRY_CODE,
-            self.SERVICE_01_ID
+            self.country_code,
+            self.service_id
         )
         db.session.add_all(streaming_options)
         db.session.commit()
 
         # Act
         page1 = StreamingOption.get_streaming_options(
-            self.COUNTRY_CODE,
-            self.SERVICE_01_ID)
+            self.country_code,
+            self.service_id)
         page2 = StreamingOption.get_streaming_options(
-            self.COUNTRY_CODE,
-            self.SERVICE_01_ID, 2)
+            self.country_code,
+            self.service_id, 2)
 
         # Assert
         self.assertEqual(len(page1.items), 20)
