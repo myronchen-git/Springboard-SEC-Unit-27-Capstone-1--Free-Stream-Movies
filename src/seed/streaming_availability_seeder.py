@@ -142,9 +142,9 @@ def get_movies_and_streams_from_one_request(country_code: str, service_ids: list
         body = resp.json()
 
         output = {
-            'movies': [],
-            'movie_posters': [],
-            'streaming_options': [],
+            'movies': {},
+            'movie_posters': {},
+            'streaming_options': {},
             'next_cursor': None
         }
 
@@ -157,12 +157,20 @@ def get_movies_and_streams_from_one_request(country_code: str, service_ids: list
             # Once there is a change, for example if the link changes, it might not be possible to find the old one.
             db.session.query(StreamingOption).filter_by(
                 movie_id=show['id'],
-                country_code=country
+                country_code=country_code
             ).delete()
             db.session.commit()
 
-            for k, v in transform_show(show).items():
-                output[k].extend(v)
+            transformed_show = transform_show(show)
+            output['movies'].update({movie['id']: movie for movie in transformed_show['movies']})
+            output['movie_posters'].update({
+                f'{poster['movie_id']}-{poster['type']}-{poster['size']}': poster
+                for poster in transformed_show['movie_posters']
+            })
+            output['streaming_options'].update({
+                f'{option['movie_id']}-{option['country_code']}-{option['service_id']}-{option['link']}': option
+                for option in transformed_show['streaming_options']
+            })
 
         # if there's another page of data, return next starting point, else return 'end'
         if body['hasMore']:
@@ -200,7 +208,7 @@ def seed_movies_and_streams() -> None:
 
     cursors = read_json_file_helper(cursor_file_location)
 
-    data_for_all_shows = {'movies': [], 'movie_posters': [], 'streaming_options': []}
+    data_for_all_shows = {'movies': {}, 'movie_posters': {}, 'streaming_options': {}}
 
     for country_code, service_ids in countries_services.items():
         logger.info(f'Seeding movies and streaming options for '
@@ -216,7 +224,7 @@ def seed_movies_and_streams() -> None:
 
                 if cursor_and_data:
                     for k in data_for_all_shows:
-                        data_for_all_shows[k].extend(cursor_and_data[k])
+                        data_for_all_shows[k].update(cursor_and_data[k])
 
                     cursor = cursor_and_data['next_cursor']
                     cursors[country_code] = cursor
@@ -231,9 +239,9 @@ def seed_movies_and_streams() -> None:
             # sleep needed due to Streaming Availability API request rate limit per second
             time.sleep(1)
 
-    Movie.upsert_database(data_for_all_shows['movies'])
-    MoviePoster.upsert_database(data_for_all_shows['movie_posters'])
-    StreamingOption.insert_database(data_for_all_shows['streaming_options'])
+    Movie.upsert_database(list(data_for_all_shows['movies'].values()))
+    MoviePoster.upsert_database(list(data_for_all_shows['movie_posters'].values()))
+    StreamingOption.insert_database(list(data_for_all_shows['streaming_options'].values()))
     db.session.commit()
 
 # ==================================================

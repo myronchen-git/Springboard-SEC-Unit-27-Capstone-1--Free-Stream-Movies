@@ -137,9 +137,21 @@ class GetMoviesAndStreamsFromOneRequestUnitTests(TestCase):
 
         def side_effect_func(show):
             return {
-                'movies': [{'id': show['id']}],
-                'movie_posters': [{'link': 'link' + show['id']}],
-                'streaming_options': [{'movie_id': show['id']}]
+                'movies': [
+                    {'id': show['id']}
+                ],
+                'movie_posters': [
+                    {'movie_id': show['id'],
+                     'type': 'verticalPoster',
+                     'size': 'w240',
+                     'link': 'link' + show['id']}
+                ],
+                'streaming_options': [
+                    {'movie_id': show['id'],
+                     'country_code': country,
+                     'service_id': service_ids[0],
+                     'link': 'link' + show['id']}
+                ]
             }
 
         mock_transform_show.side_effect = side_effect_func
@@ -152,9 +164,23 @@ class GetMoviesAndStreamsFromOneRequestUnitTests(TestCase):
             expected_db_calls.append(call.session.commit())
 
         expected_result = {
-            'movies': [{'id': '1'}, {'id': '2'}],
-            'movie_posters': [{'link': 'link1'}, {'link': 'link2'}],
-            'streaming_options': [{'movie_id': '1'}, {'movie_id': '2'}],
+            'movies': {movie['id']: movie for movie in shows_input},
+            'movie_posters': {
+                f'{movie['id']}-verticalPoster-w240': {
+                    'movie_id': movie['id'],
+                    'type': 'verticalPoster',
+                    'size': 'w240',
+                    'link': 'link' + movie['id']
+                } for movie in shows_input
+            },
+            'streaming_options': {
+                f'{movie['id']}-{country}-{service_ids[0]}-link{movie['id']}': {
+                    'movie_id': movie['id'],
+                    'country_code': country,
+                    'service_id': service_ids[0],
+                    'link': f'link{movie['id']}'
+                } for movie in shows_input
+            },
             'next_cursor': '1234:56'
         }
 
@@ -199,9 +225,21 @@ class GetMoviesAndStreamsFromOneRequestUnitTests(TestCase):
 
                 def side_effect_func(show):
                     return {
-                        'movies': [{'id': show['id']}],
-                        'movie_posters': [{'link': 'link' + show['id']}],
-                        'streaming_options': [{'movie_id': show['id']}]
+                        'movies': [
+                            {'id': show['id']}
+                        ],
+                        'movie_posters': [
+                            {'movie_id': show['id'],
+                             'type': 'verticalPoster',
+                             'size': 'w240',
+                             'link': 'link' + show['id']}
+                        ],
+                        'streaming_options': [
+                            {'movie_id': show['id'],
+                             'country_code': country,
+                             'service_id': service_ids[0],
+                             'link': 'link' + show['id']}
+                        ]
                     }
 
                 mock_transform_show.side_effect = side_effect_func
@@ -214,9 +252,23 @@ class GetMoviesAndStreamsFromOneRequestUnitTests(TestCase):
                     expected_db_calls.append(call.session.commit())
 
                 expected_result = {
-                    'movies': shows_input,
-                    'movie_posters': [{'link': 'link' + movie['id']} for movie in shows_input],
-                    'streaming_options': [{'movie_id': movie['id']} for movie in shows_input],
+                    'movies': {movie['id']: movie for movie in shows_input},
+                    'movie_posters': {
+                        f'{movie['id']}-verticalPoster-w240': {
+                            'movie_id': movie['id'],
+                            'type': 'verticalPoster',
+                            'size': 'w240',
+                            'link': 'link' + movie['id']
+                        } for movie in shows_input
+                    },
+                    'streaming_options': {
+                        f'{movie['id']}-{country}-{service_ids[0]}-link{movie['id']}': {
+                            'movie_id': movie['id'],
+                            'country_code': country,
+                            'service_id': service_ids[0],
+                            'link': f'link{movie['id']}'
+                        } for movie in shows_input
+                    },
                     'next_cursor': 'end'
                 }
 
@@ -294,12 +346,14 @@ class SeedMoviesAndStreamsUnitTests(TestCase):
         mock_read_json_file_helper.return_value = {}
 
         # using strings in place of dictionaries in the lists should still work, since only the object matters
-        mock_get_movies_and_streams_from_one_request.return_value = {
-            'movies': ['movie'],
-            'movie_posters': ['movie_poster'],
-            'streaming_options': ['streaming_option'],
-            'next_cursor': 'end'
-        }
+        def side_effect_func(country_code, service_ids, cursor):
+            return {
+                'movies': {f'movie_{country_code}': 'movie'},
+                'movie_posters': {f'movie_poster_{country_code}': 'movie_poster'},
+                'streaming_options': {f'streaming_option_{country_code}': 'streaming_option'},
+                'next_cursor': 'end'
+            }
+        mock_get_movies_and_streams_from_one_request.side_effect = side_effect_func
 
         # Arrange expected
         expected_db_call = call.session.query(mock_CountryService).all().call_list()
@@ -346,12 +400,14 @@ class SeedMoviesAndStreamsUnitTests(TestCase):
             'ca': 'next ca movie', 'us': 'next us movie'}
 
         # using strings in place of dictionaries in the lists should still work, since only the object matters
-        mock_get_movies_and_streams_from_one_request.return_value = {
-            'movies': ['movie'],
-            'movie_posters': ['movie_poster'],
-            'streaming_options': ['streaming_option'],
-            'next_cursor': 'end'
-        }
+        def side_effect_func(country_code, service_ids, cursor):
+            return {
+                'movies': {f'movie_{country_code}': 'movie'},
+                'movie_posters': {f'movie_poster_{country_code}': 'movie_poster'},
+                'streaming_options': {f'streaming_option_{country_code}': 'streaming_option'},
+                'next_cursor': 'end'
+            }
+        mock_get_movies_and_streams_from_one_request.side_effect = side_effect_func
 
         # Arrange expected
         expected_db_call = call.session.query(mock_CountryService).all().call_list()
@@ -441,31 +497,31 @@ class SeedMoviesAndStreamsUnitTests(TestCase):
             if country_code == 'ca':
                 if cursor is None:
                     return {
-                        'movies': ['movie'],
-                        'movie_posters': ['movie_poster'],
-                        'streaming_options': ['streaming_option'],
+                        'movies': {f'movie_{country_code}_1': 'movie'},
+                        'movie_posters': {f'movie_poster_{country_code}_1': 'movie_poster'},
+                        'streaming_options': {f'streaming_option_{country_code}_1': 'streaming_option'},
                         'next_cursor': '29583:A Dark Truth'
                     }
                 elif cursor == '29583:A Dark Truth':
                     return {
-                        'movies': ['movie'],
-                        'movie_posters': ['movie_poster'],
-                        'streaming_options': ['streaming_option'],
+                        'movies': {f'movie_{country_code}_2': 'movie'},
+                        'movie_posters': {f'movie_poster_{country_code}_2': 'movie_poster'},
+                        'streaming_options': {f'streaming_option_{country_code}_2': 'streaming_option'},
                         'next_cursor': 'end'
                     }
             if country_code == 'us':
                 if cursor is None:
                     return {
-                        'movies': ['movie'],
-                        'movie_posters': ['movie_poster'],
-                        'streaming_options': ['streaming_option'],
+                        'movies': {f'movie_{country_code}_3': 'movie'},
+                        'movie_posters': {f'movie_poster_{country_code}_3': 'movie_poster'},
+                        'streaming_options': {f'streaming_option_{country_code}_3': 'streaming_option'},
                         'next_cursor': '210942:A Deeper Shade of Blue'
                     }
                 elif cursor == '210942:A Deeper Shade of Blue':
                     return {
-                        'movies': ['movie'],
-                        'movie_posters': ['movie_poster'],
-                        'streaming_options': ['streaming_option'],
+                        'movies': {f'movie_{country_code}_4': 'movie'},
+                        'movie_posters': {f'movie_poster_{country_code}_4': 'movie_poster'},
+                        'streaming_options': {f'streaming_option_{country_code}_4': 'streaming_option'},
                         'next_cursor': 'end'
                     }
         mock_get_movies_and_streams_from_one_request.side_effect = side_effect_func
