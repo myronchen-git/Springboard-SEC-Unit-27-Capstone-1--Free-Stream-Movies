@@ -24,7 +24,7 @@ $(document).ready(() => {
 async function getMoviesFromAllServices(countryCode) {
     const $servicesMoviesLists = $(".section-service__div-movies");
 
-    await $servicesMoviesLists.each(async function (index, element) {
+    for (const element of $servicesMoviesLists) {
         const serviceId = element.dataset.service;
 
         const moviePageData = await getPageOfMoviesFromService(countryCode, serviceId);
@@ -41,7 +41,7 @@ async function getMoviesFromAllServices(countryCode) {
         }
 
         buildMoviesDiv(element, moviePageData, moviePosterData);
-    });
+    }
 }
 
 /**
