@@ -12,12 +12,14 @@ import time
 
 import requests
 
-from src.adapters.streaming_availability_adapter import \
-    store_movie_and_streaming_options
+from src.adapters.streaming_availability_adapter import transform_show
 from src.app import RAPID_API_KEY, create_app
 from src.models.common import connect_db, db
 from src.models.country_service import CountryService
+from src.models.movie import Movie
+from src.models.movie_poster import MoviePoster
 from src.models.service import Service
+from src.models.streaming_option import StreamingOption
 from src.seed.common_constants import (
     BLACKLISTED_SERVICES,
     STREAMING_AVAILABILITY_API_REQUEST_RATE_LIMIT_PER_SECOND)
@@ -98,10 +100,12 @@ def seed_services() -> None:
                      f'status code {resp.status_code}: {resp.text}.')
 
 
-def seed_movies_and_streams_from_one_request(country: str, service_ids: list[str], cursor: str = None) -> str | None:
+def get_movies_and_streams_from_one_request(country: str, service_ids: list[str], cursor: str = None) -> dict:
     """
-    Adds records to the movies and streaming_options tables with data from one API request.
+    Gets data for movies, movie_posters, and streaming_options tables from one API request, and returns it.
     Returns the next cursor if there are more records to get, or returns 'end' if there aren't.
+    Deletes existing movies' streaming options, since it is not possible to find the outdated option belonging
+    to an updated option.
     If the HTTP response status code from the API is not 200, then None is returned.
     Parameter country is country code.
 
@@ -110,11 +114,14 @@ def seed_movies_and_streams_from_one_request(country: str, service_ids: list[str
     :param country: The country code of the country to get data for.
     :param service_ids: A list of streaming service IDs to get data for.  This can not be empty.
     :param cursor: The next cursor (movie) to use for getting the next page of results.
-        This has the form "ID:NAME".
+        This has the form "ID:NAME" or "ID:RATING".
         This would be None if getting the first page of results.
-    :return: The next cursor (movie) to start at, if there are more results.
+    :return: A dict {'movies', 'movie_posters', 'streaming_options', 'next_cursor'}.
+        movies, movie_posters, and streaming_options contain all the necessary model data,
+        transformed from the Show JSON.
+        next_cursor contains the next cursor (movie) to start at, if there are more results, or
         "end" if there is no more results to get.
-        None if response is not 200.
+        Returns None if response is not 200.
     """
 
     # set up variables
@@ -135,17 +142,38 @@ def seed_movies_and_streams_from_one_request(country: str, service_ids: list[str
     if resp.status_code == 200:
         body = resp.json()
 
+        output = {
+            'movies': [],
+            'movie_posters': [],
+            'streaming_options': [],
+            'next_cursor': None
+        }
+
         # store data
         for show in body['shows']:
-            store_movie_and_streaming_options(show)
+            # Deleting old streaming options, since "updated" changes from Streaming Availability API can contain
+            # additions, removals, and modifications.
+            # It is also not easy to find an old StreamingOption, since there can be multiple streaming options
+            # for a movie, country, and streaming service, such as when there are different languages for a movie.
+            # Once there is a change, for example if the link changes, it might not be possible to find the old one.
+            db.session.query(StreamingOption).filter_by(
+                movie_id=show['id'],
+                country_code=country
+            ).delete()
+            db.session.commit()
 
-        # if there's another page of data, return next starting point
+            for k, v in transform_show(show).items():
+                output[k].extend(v)
+
+        # if there's another page of data, return next starting point, else return 'end'
         if body['hasMore']:
             logger.info(f'Response has more results.  '
                         f'Next cursor is "{body['nextCursor']}".')
-            return body['nextCursor']
+            output['next_cursor'] = body['nextCursor']
         else:
-            return 'end'
+            output['next_cursor'] = 'end'
+
+        return output
 
     else:
         logger.error(f'Unsuccessful response from API: '
@@ -154,14 +182,15 @@ def seed_movies_and_streams_from_one_request(country: str, service_ids: list[str
 
 def seed_movies_and_streams() -> None:
     """
-    Adds records to the movies and streaming_options tables for all countries
+    Adds records to the movies, movie_posters, and streaming_options tables for all countries
     and free streaming services.
 
     This will save the next cursor (movie), which will be used to get the next page of
     movie data for a specified country.  In other words, there is bookmarking.
 
     Cursors will be in a dictionary containing country codes, where each country code
-    contains the next cursor to use.  It is possible that cursors will be an empty dict.
+    contains the next cursor to use.  When reading the cursors file, it is possible that
+    cursors will be an empty dict.
     ({country: cursor, country: cursor, ...})
 
     Cursors will be saved into a JSON file.
@@ -172,31 +201,41 @@ def seed_movies_and_streams() -> None:
 
     cursors = read_json_file_helper(cursor_file_location)
 
+    data_for_all_shows = {'movies': [], 'movie_posters': [], 'streaming_options': []}
+
     for country_code, service_ids in countries_services.items():
         logger.info(f'Seeding movies and streaming options for '
                     f'country "{country_code}" and services "{service_ids}".')
 
         cursor = cursors.get(country_code)
-
         logger.debug(f'Saved next cursor is: "{cursor}".')
 
         # repeat requests due to Streaming Availability API rate limit
         while cursor != 'end':
             for i in range(STREAMING_AVAILABILITY_API_REQUEST_RATE_LIMIT_PER_SECOND):
-                cursor = seed_movies_and_streams_from_one_request(country_code, service_ids, cursor)
+                cursor_and_data = get_movies_and_streams_from_one_request(country_code, service_ids, cursor)
 
-                if cursor:
+                if cursor_and_data:
+                    for k in data_for_all_shows:
+                        data_for_all_shows[k].extend(cursor_and_data[k])
+
+                    cursor = cursor_and_data['next_cursor']
                     cursors[country_code] = cursor
                     write_json_file_helper(cursor_file_location, cursors)
 
-                if not cursor or cursor == 'end':
+                if not cursor_and_data or cursor == 'end':
                     break
 
-            if not cursor or cursor == 'end':
+            if not cursor_and_data or cursor == 'end':
                 break
 
             # sleep needed due to Streaming Availability API request rate limit per second
             time.sleep(1)
+
+    Movie.upsert_database(data_for_all_shows['movies'])
+    MoviePoster.upsert_database(data_for_all_shows['movie_posters'])
+    StreamingOption.insert_database(data_for_all_shows['streaming_options'])
+    db.session.commit()
 
 # ==================================================
 
