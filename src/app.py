@@ -18,7 +18,7 @@ from flask import Flask, flash, redirect, render_template, request, url_for
 from flask_login import LoginManager
 
 from src.adapters.streaming_availability_adapter import (
-    convert_show_json_into_movie_object, store_movie_and_streaming_options)
+    convert_show_json_into_movie_object, transform_show)
 from src.exceptions.base_exceptions import FreeStreamMoviesClientError
 from src.exceptions.UserRegistrationError import UserRegistrationError
 from src.forms.user_forms import LoginUserForm, RegisterUserForm
@@ -251,7 +251,11 @@ def create_app(db_name, testing=False):
             show = resp.json()
 
             if resp.status_code == 200:
-                store_movie_and_streaming_options(show)
+                data = transform_show(show)
+                Movie.upsert_database(data['movies'])
+                MoviePoster.upsert_database(data['movie_posters'])
+                StreamingOption.insert_database(data['streaming_options'])
+                db.session.commit()
 
                 # Temporary Movie object used to store data.
                 # This is different than the same Movie retrieved from the database.
