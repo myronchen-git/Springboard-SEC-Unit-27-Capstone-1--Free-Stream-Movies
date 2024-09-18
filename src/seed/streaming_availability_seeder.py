@@ -100,18 +100,17 @@ def seed_services() -> None:
                      f'status code {resp.status_code}: {resp.text}.')
 
 
-def get_movies_and_streams_from_one_request(country: str, service_ids: list[str], cursor: str = None) -> dict:
+def get_movies_and_streams_from_one_request(country_code: str, service_ids: list[str], cursor: str = None) -> dict:
     """
     Gets data for movies, movie_posters, and streaming_options tables from one API request, and returns it.
     Returns the next cursor if there are more records to get, or returns 'end' if there aren't.
     Deletes existing movies' streaming options, since it is not possible to find the outdated option belonging
     to an updated option.
     If the HTTP response status code from the API is not 200, then None is returned.
-    Parameter country is country code.
 
     See https://docs.movieofthenight.com/resource/shows#search-shows-by-filters
 
-    :param country: The country code of the country to get data for.
+    :param country_code: The country code of the country to get data for.
     :param service_ids: A list of streaming service IDs to get data for.  This can not be empty.
     :param cursor: The next cursor (movie) to use for getting the next page of results.
         This has the form "ID:NAME" or "ID:RATING".
@@ -129,7 +128,7 @@ def get_movies_and_streams_from_one_request(country: str, service_ids: list[str]
     headers = {'X-RapidAPI-Key': RAPID_API_KEY}
 
     catalogs = ', '.join([service_id + '.free' for service_id in service_ids])
-    querystring = {"country": country,
+    querystring = {"country": country_code,
                    "order_by": "original_title",
                    "catalogs": catalogs,
                    "show_type": "movie"}
