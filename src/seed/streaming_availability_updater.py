@@ -12,16 +12,19 @@ import time
 
 import requests
 
-from src.adapters.streaming_availability_adapter import \
-    store_movie_and_streaming_options
 from src.app import RAPID_API_KEY, create_app
 from src.exceptions.StreamingAvailabilityApiError import \
     StreamingAvailabilityApiError
 from src.models.common import connect_db, db
 from src.models.country_service import CountryService
+from src.models.movie import Movie
+from src.models.movie_poster import MoviePoster
+from src.models.streaming_option import StreamingOption
 from src.seed.common_constants import (
-    STREAMING_AVAILABILITY_API_REQUEST_RATE_LIMIT_PER_DAY,
+    SA_API_PREFERRED_REQUEST_RATE_LIMIT_PER_DAY,
     STREAMING_AVAILABILITY_API_REQUEST_RATE_LIMIT_PER_SECOND)
+from src.seed.seeder_updater_helpers import (
+    delete_country_movie_streaming_options, make_unique_transformed_show_data)
 from src.util.file_handling import (read_json_file_helper,
                                     write_json_file_helper)
 from src.util.logger import create_logger
@@ -44,6 +47,9 @@ def get_updated_movies_and_streaming_options() -> None:
     Timestamps will be in the format {country: timestamp}, because all streaming services at SA API will be queried for
     a given country.  If a new service is introduced in SA API, its movies will be added at a later timestamp, and
     therefore, will be covered using this format.
+
+    If the rate limit is reached or if there is an exception when retrieving updated data, then this function will
+    save all data retrieved so far and exit.
     """
 
     countries_services = db.session.query(CountryService).all()
@@ -51,38 +57,62 @@ def get_updated_movies_and_streaming_options() -> None:
 
     from_timestamps = read_json_file_helper(next_timestamps_file_location)
 
+    data_for_all_shows = {'movies': {}, 'movie_posters': {}, 'streaming_options': {}}
+
     num_requests = 0
+    should_continue = True
     for country_code, service_ids in countries_services.items():
         has_more = True
 
-        while has_more:
+        while has_more and should_continue:
             for i in range(STREAMING_AVAILABILITY_API_REQUEST_RATE_LIMIT_PER_SECOND):
+                # make a request
                 try:
-                    has_more, next_from_timestamp = get_updated_movies_and_streams_from_one_request(
+                    transformed_request_data = get_updated_movies_and_streams_from_one_request(
                         country_code, service_ids, from_timestamps.get(country_code))
                 except StreamingAvailabilityApiError:
-                    return
+                    should_continue = False
+                    break
 
+                # update and check total number of requests made
                 num_requests += 1
+                if num_requests >= SA_API_PREFERRED_REQUEST_RATE_LIMIT_PER_DAY:
+                    should_continue = False
 
-                if next_from_timestamp:
-                    from_timestamps[country_code] = next_from_timestamp
+                # add transformed movie and etc. data to data_for_all_shows
+                for k in data_for_all_shows:
+                    if k in transformed_request_data:
+                        data_for_all_shows[k].update(transformed_request_data[k])
+
+                # saving the next from_timestamp
+                if transformed_request_data['next_from_timestamp']:
+                    from_timestamps[country_code] = transformed_request_data['next_from_timestamp']
                     write_json_file_helper(next_timestamps_file_location, from_timestamps)
 
-                if num_requests >= STREAMING_AVAILABILITY_API_REQUEST_RATE_LIMIT_PER_DAY * 0.8:
-                    return
+                has_more = transformed_request_data['has_more']
 
                 if not has_more:
                     break
 
-            if has_more:
+            if has_more and should_continue:
                 # sleep needed due to Streaming Availability API request rate limit per second
                 time.sleep(1)
+
+        if not should_continue:
+            break
+
+    logger.info(f'Number of requests made: {num_requests}.')
+
+    # adding movie, poster, and streaming option data to database
+    Movie.upsert_database(list(data_for_all_shows['movies'].values()))
+    MoviePoster.upsert_database(list(data_for_all_shows['movie_posters'].values()))
+    StreamingOption.insert_database(list(data_for_all_shows['streaming_options'].values()))
+    db.session.commit()
 
 
 def get_updated_movies_and_streams_from_one_request(
         country_code: str, service_ids: list[str], from_timestamp: int = None
-) -> tuple[bool, int | None]:
+) -> dict:
     """
     Updates records for movies and streaming_options tables with data from one API request.  Can optionally accept
     a "from" timestamp to start getting changes from.
@@ -94,16 +124,32 @@ def get_updated_movies_and_streams_from_one_request(
     retrieve, as well as no next "from" timestamp to start at.  Otherwise, a next "from" timestamp will be returned, so
     that the same updates are not retrieved again from SA API.
 
-    Returns a boolean, indicating if there are more to retrieve, and an integer if there is a timestamp to save or None
-    if there isn't.  This can also raise an exception if the response has an unexpected status code.
+    Returns a dict, containing movie and etc. data, an indication if there are more to retrieve, and an integer if there
+    is a timestamp to save or None if there isn't.  This can also raise an exception if the response has an unexpected
+    status code.
 
     :param country_code: The country's code to get data for.
     :param service_ids: A list of streaming service IDs.  This can not be empty.
     :param from_timestamp: An optional timestamp to use for the "from" query parameter for fetching changes from
         Streaming Availability API.  This is the start time to begin looking up changes and must be within 31 days
         from right now.
-    :return: A tuple with first item indicating if there is more data to retrieve and second item being the next "from"
-        timestamp to start at.  The second item can be None, such as when there aren't any changes found.
+    :return: A dict containing movie and etc. data, whether there is more data to get, and the next timestamp to
+        start at.
+        {
+            'movies': {
+                'movie identifier': {movie attributes}
+            },
+            'movie_posters': {
+                'poster identifier': {movie poster attributes},
+                ...
+            },
+            'streaming_options': {
+                'streaming options identifier': {streaming option attributes},
+                ...
+            },
+            'has_more': bool,
+            'next_from_timestamp': int | None
+        }
     :raise StreamingAvailabilityApiError: If Streaming Availability API returns a response with status code that is
         not 200, or a response that does not indicate that it is due to client error.
     """
@@ -120,7 +166,7 @@ def get_updated_movies_and_streams_from_one_request(
 
     # call API
     resp = requests.get(url, headers=headers, params=querystring)
-    logger.info(f'Called {url} and received status {resp.status_code}.')
+    logger.info(f'Called {url} for country "{country_code}" and received status {resp.status_code}.')
 
     # handle response
     body = resp.json()
@@ -129,11 +175,25 @@ def get_updated_movies_and_streams_from_one_request(
         # if there are no updates, then exit immediately
         if not body['shows']:
             logger.warn(f'There are no updates for {country_code}.')
-            return (False, None)
+            return {
+                'has_more': False,
+                'next_from_timestamp': None
+            }
 
         # store data
+        output = {
+            'movies': {},
+            'movie_posters': {},
+            'streaming_options': {},
+            'has_more': None,
+            'next_from_timestamp': None
+        }
+
         for show in body['shows'].values():
-            store_movie_and_streaming_options(show)
+            delete_country_movie_streaming_options(show['id'], country_code)
+            unique_transformed_show_data = make_unique_transformed_show_data(show)
+            for k in unique_transformed_show_data:
+                output[k].update(unique_transformed_show_data[k])
 
         if body['hasMore']:
             # if there's another page of data, return first part of next cursor
@@ -145,7 +205,11 @@ def get_updated_movies_and_streams_from_one_request(
             logger.debug('Response has no more results.')
 
         logger.info(f'Next "from" timestamp is {next_from_timestamp}.')
-        return (body['hasMore'], next_from_timestamp)
+        output['next_from_timestamp'] = next_from_timestamp
+
+        output['has_more'] = body['hasMore']
+
+        return output
 
     elif resp.status_code == 400 and 'parameter "from" cannot be more than 31 days in the past' in body['message']:
         # if "from" timestamp is too old, try again without "from" attribute
