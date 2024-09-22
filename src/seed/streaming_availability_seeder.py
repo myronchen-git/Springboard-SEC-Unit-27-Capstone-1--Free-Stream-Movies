@@ -12,7 +12,6 @@ import time
 
 import requests
 
-from src.adapters.streaming_availability_adapter import transform_show
 from src.app import RAPID_API_KEY, create_app
 from src.models.common import connect_db, db
 from src.models.country_service import CountryService
@@ -23,6 +22,8 @@ from src.models.streaming_option import StreamingOption
 from src.seed.common_constants import (
     BLACKLISTED_SERVICES,
     STREAMING_AVAILABILITY_API_REQUEST_RATE_LIMIT_PER_SECOND)
+from src.seed.seeder_updater_helpers import (
+    delete_country_movie_streaming_options, make_unique_transformed_show_data)
 from src.util.file_handling import (read_json_file_helper,
                                     write_json_file_helper)
 from src.util.logger import create_logger
@@ -150,27 +151,10 @@ def get_movies_and_streams_from_one_request(country_code: str, service_ids: list
 
         # store data
         for show in body['shows']:
-            # Deleting old streaming options, since "updated" changes from Streaming Availability API can contain
-            # additions, removals, and modifications.
-            # It is also not easy to find an old StreamingOption, since there can be multiple streaming options
-            # for a movie, country, and streaming service, such as when there are different languages for a movie.
-            # Once there is a change, for example if the link changes, it might not be possible to find the old one.
-            db.session.query(StreamingOption).filter_by(
-                movie_id=show['id'],
-                country_code=country_code
-            ).delete()
-            db.session.commit()
-
-            transformed_show = transform_show(show)
-            output['movies'].update({movie['id']: movie for movie in transformed_show['movies']})
-            output['movie_posters'].update({
-                f'{poster['movie_id']}-{poster['type']}-{poster['size']}': poster
-                for poster in transformed_show['movie_posters']
-            })
-            output['streaming_options'].update({
-                f'{option['movie_id']}-{option['country_code']}-{option['service_id']}-{option['link']}': option
-                for option in transformed_show['streaming_options']
-            })
+            delete_country_movie_streaming_options(show['id'], country_code)
+            unique_transformed_show_data = make_unique_transformed_show_data(show)
+            for k in unique_transformed_show_data:
+                output[k].update(unique_transformed_show_data[k])
 
         # if there's another page of data, return next starting point, else return 'end'
         if body['hasMore']:

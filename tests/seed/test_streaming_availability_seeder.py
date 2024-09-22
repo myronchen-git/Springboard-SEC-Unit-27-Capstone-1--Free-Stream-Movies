@@ -29,11 +29,10 @@ db.create_all()
 # --------------------------------------------------
 
 
-@patch('src.seed.streaming_availability_seeder.transform_show', autospec=True)
-@patch('src.seed.streaming_availability_seeder.StreamingOption', autospec=True)
-@patch('src.seed.streaming_availability_seeder.db', autospec=True)
+@patch('src.seed.streaming_availability_seeder.make_unique_transformed_show_data', autospec=True)
+@patch('src.seed.streaming_availability_seeder.delete_country_movie_streaming_options', autospec=True)
 @patch('src.seed.streaming_availability_seeder.requests', autospec=True)
-@patch('src.seed.streaming_availability_seeder.RAPID_API_KEY', autospec=True)
+@patch('src.seed.streaming_availability_seeder.RAPID_API_KEY')
 class GetMoviesAndStreamsFromOneRequestUnitTests(TestCase):
     """Unit tests for get_movies_and_streams_from_one_request()."""
 
@@ -41,9 +40,8 @@ class GetMoviesAndStreamsFromOneRequestUnitTests(TestCase):
             self,
             mock_RAPID_API_KEY,
             mock_requests,
-            mock_db,
-            mock_StreamingOption,
-            mock_transform_show
+            mock_delete_country_movie_streaming_options,
+            mock_make_unique_transformed_show_data
     ):
         """Tests that the API request is correct when requesting data for one and many services."""
 
@@ -80,9 +78,8 @@ class GetMoviesAndStreamsFromOneRequestUnitTests(TestCase):
             self,
             mock_RAPID_API_KEY,
             mock_requests,
-            mock_db,
-            mock_StreamingOption,
-            mock_transform_show
+            mock_delete_country_movie_streaming_options,
+            mock_make_unique_transformed_show_data
     ):
         """Tests that the API request is correct when a cursor is present."""
 
@@ -111,9 +108,8 @@ class GetMoviesAndStreamsFromOneRequestUnitTests(TestCase):
             self,
             mock_RAPID_API_KEY,
             mock_requests,
-            mock_db,
-            mock_StreamingOption,
-            mock_transform_show
+            mock_delete_country_movie_streaming_options,
+            mock_make_unique_transformed_show_data
     ):
         """
         If the API response indicates there is more data to be requested, then put the next cursor in the return.
@@ -136,32 +132,12 @@ class GetMoviesAndStreamsFromOneRequestUnitTests(TestCase):
         mock_requests.get.return_value = mock_response
 
         def side_effect_func(show):
-            return {
-                'movies': [
-                    {'id': show['id']}
-                ],
-                'movie_posters': [
-                    {'movie_id': show['id'],
-                     'type': 'verticalPoster',
-                     'size': 'w240',
-                     'link': 'link' + show['id']}
-                ],
-                'streaming_options': [
-                    {'movie_id': show['id'],
-                     'country_code': country,
-                     'service_id': service_ids[0],
-                     'link': 'link' + show['id']}
-                ]
-            }
+            return mock_make_unique_transformed_show_data_side_effect(country, service_ids, show)
 
-        mock_transform_show.side_effect = side_effect_func
+        mock_make_unique_transformed_show_data.side_effect = side_effect_func
 
         # Arrange expected
-        expected_db_calls = []
-        for movie in shows_input:
-            expected_db_calls.extend(call.session.query(mock_StreamingOption).filter_by(
-                movie_id=movie['id'], country_code=country).delete().call_list())
-            expected_db_calls.append(call.session.commit())
+        expected_delete_calls = [call(show['id'], country) for show in shows_input]
 
         expected_result = {
             'movies': {movie['id']: movie for movie in shows_input},
@@ -189,15 +165,14 @@ class GetMoviesAndStreamsFromOneRequestUnitTests(TestCase):
 
         # Assert
         self.assertEqual(result, expected_result)
-        self.assertEqual(mock_db.mock_calls, expected_db_calls)
+        self.assertEqual(mock_delete_country_movie_streaming_options.mock_calls, expected_delete_calls)
 
     def test_receiving_any_number_of_shows_and_there_is_no_more(
             self,
             mock_RAPID_API_KEY,
             mock_requests,
-            mock_db,
-            mock_StreamingOption,
-            mock_transform_show
+            mock_delete_country_movie_streaming_options,
+            mock_make_unique_transformed_show_data
     ):
         """Tests that the return includes the correct data when there are any number of shows in the API response."""
 
@@ -224,32 +199,12 @@ class GetMoviesAndStreamsFromOneRequestUnitTests(TestCase):
                 mock_requests.get.return_value = mock_response
 
                 def side_effect_func(show):
-                    return {
-                        'movies': [
-                            {'id': show['id']}
-                        ],
-                        'movie_posters': [
-                            {'movie_id': show['id'],
-                             'type': 'verticalPoster',
-                             'size': 'w240',
-                             'link': 'link' + show['id']}
-                        ],
-                        'streaming_options': [
-                            {'movie_id': show['id'],
-                             'country_code': country,
-                             'service_id': service_ids[0],
-                             'link': 'link' + show['id']}
-                        ]
-                    }
+                    return mock_make_unique_transformed_show_data_side_effect(country, service_ids, show)
 
-                mock_transform_show.side_effect = side_effect_func
+                mock_make_unique_transformed_show_data.side_effect = side_effect_func
 
                 # Arrange expected
-                expected_db_calls = []
-                for movie in shows_input:
-                    expected_db_calls.extend(call.session.query(mock_StreamingOption).filter_by(
-                        movie_id=movie['id'], country_code=country).delete().call_list())
-                    expected_db_calls.append(call.session.commit())
+                expected_delete_calls = [call(show['id'], country) for show in shows_input]
 
                 expected_result = {
                     'movies': {movie['id']: movie for movie in shows_input},
@@ -277,18 +232,17 @@ class GetMoviesAndStreamsFromOneRequestUnitTests(TestCase):
 
                 # Assert
                 self.assertEqual(result, expected_result)
-                self.assertEqual(mock_db.mock_calls, expected_db_calls)
+                self.assertEqual(mock_delete_country_movie_streaming_options.mock_calls, expected_delete_calls)
 
                 # clean up
-                mock_db.reset_mock()
+                mock_delete_country_movie_streaming_options.reset_mock()
 
     def test_when_api_response_is_not_200(
             self,
             mock_RAPID_API_KEY,
             mock_requests,
-            mock_db,
-            mock_StreamingOption,
-            mock_transform_show
+            mock_delete_country_movie_streaming_options,
+            mock_make_unique_transformed_show_data
     ):
         """When the API response is not 200, return None."""
 
@@ -306,8 +260,8 @@ class GetMoviesAndStreamsFromOneRequestUnitTests(TestCase):
 
         # Assert
         self.assertIsNone(result)
-        mock_db.assert_not_called()
-        mock_transform_show.assert_not_called()
+        mock_delete_country_movie_streaming_options.assert_not_called()
+        mock_make_unique_transformed_show_data.assert_not_called()
 
 
 @patch('src.seed.streaming_availability_seeder.StreamingOption', autospec=True)
@@ -630,3 +584,25 @@ class SeedMoviesAndStreamsUnitTests(TestCase):
         mock_StreamingOption.insert_database.assert_called_once_with([])
 
     # Maybe add one more test for one country and service, for when there are 20+ pages or cursors.
+
+# ==================================================
+
+
+def mock_make_unique_transformed_show_data_side_effect(country: str, service_ids: list, show: dict) -> dict:
+    return {
+        'movies': {
+            show['id']: {'id': show['id']}
+        },
+        'movie_posters': {
+            f'{show['id']}-verticalPoster-w240': {'movie_id': show['id'],
+                                                  'type': 'verticalPoster',
+                                                  'size': 'w240',
+                                                  'link': 'link' + show['id']}
+        },
+        'streaming_options': {
+            f'{show['id']}-{country}-{service_ids[0]}-{'link' + show['id']}': {'movie_id': show['id'],
+                                                                               'country_code': country,
+                                                                               'service_id': service_ids[0],
+                                                                               'link': 'link' + show['id']}
+        }
+    }
