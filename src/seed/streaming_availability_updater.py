@@ -21,7 +21,7 @@ from src.models.country_service import CountryService
 from src.models.movie import Movie
 from src.models.movie_poster import MoviePoster
 from src.models.streaming_option import StreamingOption
-from src.seed.common_constants import (
+from src.seed.seed_updater_constants import (
     SA_API_PREFERRED_REQUEST_RATE_LIMIT_PER_DAY,
     STREAMING_AVAILABILITY_API_REQUEST_RATE_LIMIT_PER_SECOND)
 from src.seed.seeder_updater_helpers import (

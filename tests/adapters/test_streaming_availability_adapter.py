@@ -107,10 +107,9 @@ class StreamingAvailabilityAdapterUnitTests(TestCase):
         self.assertEqual(result, expected_result)
 
     @patch('src.adapters.streaming_availability_adapter.transform_streaming_option_json_into_dict', autospec=True)
-    @patch('src.adapters.streaming_availability_adapter.read_services_blacklist', autospec=True)
+    @patch('src.adapters.streaming_availability_adapter.BLACKLISTED_SERVICES', new={'peacock'})
     def test_gather_streaming_options(
             self,
-            mock_read_services_blacklist,
             mock_transform_streaming_option_json_into_dict):
         """
         When gathering streaming options, only free streaming options should be returned and
@@ -172,8 +171,6 @@ class StreamingAvailabilityAdapterUnitTests(TestCase):
                 movie_id = show_stargate['id']
 
                 # Arrange mocks
-                mock_read_services_blacklist.return_value = {'peacock'}
-
                 def expected_streaming_option(country):
                     return {
                         'movie_id': movie_id,
@@ -208,10 +205,9 @@ class StreamingAvailabilityAdapterUnitTests(TestCase):
                 mock_transform_streaming_option_json_into_dict.reset_mock()
 
     @patch('src.adapters.streaming_availability_adapter.transform_streaming_option_json_into_dict', autospec=True)
-    @patch('src.adapters.streaming_availability_adapter.read_services_blacklist', autospec=True)
+    @patch('src.adapters.streaming_availability_adapter.BLACKLISTED_SERVICES', new={'peacock'})
     def test_gather_streaming_options_with_no_free_options(
             self,
-            mock_read_services_blacklist,
             mock_transform_streaming_option_json_into_dict):
         """When there aren't any free options, an empty list should be returned."""
 
@@ -228,9 +224,6 @@ class StreamingAvailabilityAdapterUnitTests(TestCase):
         }
 
         movie_id = show_stargate['id']
-
-        # Arrange mocks
-        mock_read_services_blacklist.return_value = {'peacock'}
 
         # Arrange expected
         expected_result = []

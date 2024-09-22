@@ -17,7 +17,7 @@ from src.app import create_app
 from src.exceptions.StreamingAvailabilityApiError import \
     StreamingAvailabilityApiError
 from src.models.common import connect_db, db
-from src.seed.common_constants import \
+from src.seed.seed_updater_constants import \
     SA_API_PREFERRED_REQUEST_RATE_LIMIT_PER_DAY
 from src.seed.streaming_availability_updater import (
     get_updated_movies_and_streaming_options,

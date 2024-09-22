@@ -13,6 +13,7 @@ import time
 import requests
 
 from src.app import RAPID_API_KEY, create_app
+from src.common_constants import BLACKLISTED_SERVICES
 from src.exceptions.DatabaseError import DatabaseError
 from src.exceptions.UpsertError import UpsertError
 from src.models.common import connect_db, db
@@ -21,9 +22,8 @@ from src.models.movie import Movie
 from src.models.movie_poster import MoviePoster
 from src.models.service import Service
 from src.models.streaming_option import StreamingOption
-from src.seed.common_constants import (
-    BLACKLISTED_SERVICES,
-    STREAMING_AVAILABILITY_API_REQUEST_RATE_LIMIT_PER_SECOND)
+from src.seed.seed_updater_constants import \
+    STREAMING_AVAILABILITY_API_REQUEST_RATE_LIMIT_PER_SECOND
 from src.seed.seeder_updater_helpers import (
     delete_country_movie_streaming_options, make_unique_transformed_show_data)
 from src.util.file_handling import (read_json_file_helper,

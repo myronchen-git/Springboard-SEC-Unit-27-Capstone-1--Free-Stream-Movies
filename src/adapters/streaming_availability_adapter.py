@@ -1,15 +1,13 @@
 from pathlib import Path
 
+from src.common_constants import BLACKLISTED_SERVICES
 from src.models.movie import Movie
 from src.models.movie_poster import MoviePoster
 from src.models.streaming_option import StreamingOption
 from src.util.case_transform import CamelToSnake
-from src.util.file_handling import read_services_blacklist
 from src.util.logger import create_logger
 
 # ==================================================
-
-BLACKLISTED_SERVICES = read_services_blacklist()
 
 log_file_name = Path(__file__).stem
 logger = create_logger(__name__, f'src/logs/{log_file_name}.log')
@@ -134,6 +132,9 @@ def gather_streaming_options(country_streaming_options_data: dict, movie_id: str
     :param movie_id: The movie ID that this country_streaming_options_data belongs to.
     :return: A list of dicts containing StreamingOption attributes.
     """
+
+    # import pdb
+    # pdb.set_trace()
 
     streaming_options = []
     for country_code, streaming_options_data in country_streaming_options_data.items():
