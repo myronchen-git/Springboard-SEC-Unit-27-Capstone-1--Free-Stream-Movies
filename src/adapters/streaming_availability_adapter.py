@@ -1,6 +1,5 @@
 from pathlib import Path
 
-from src.models.common import db
 from src.models.movie import Movie
 from src.models.movie_poster import MoviePoster
 from src.models.streaming_option import StreamingOption
@@ -67,36 +66,6 @@ def transform_show_json_into_movie_dict(show: dict) -> dict:
     return movie
 
 
-def convert_streaming_option_json_into_object(
-        streaming_option_data: dict, movie_id: str, country_code: str
-) -> StreamingOption | None:
-    """
-    Converts Streaming Availability's Show object's streaming option into a StreamingOption object.
-
-    :param streaming_option_data: The JSON streamingOption object retrieved within a Show object from Streaming
-        Availability.
-    :param movie_id: The movie ID that this streaming_option_data belongs to.
-    :param country_code: The country that this streaming_option_data belongs to.
-    :return: A StreamingOption if successful.  If the streaming option is not free or is blacklisted,
-        then return None.
-    """
-
-    if streaming_option_data['type'] == 'free' \
-            and streaming_option_data['service']['id'].lower() not in BLACKLISTED_SERVICES:
-
-        streaming_option = StreamingOption(
-            movie_id=movie_id,
-            country_code=country_code,
-            service_id=streaming_option_data['service']['id'],
-            link=streaming_option_data['link'],
-            expires_soon=streaming_option_data['expiresSoon'],
-            expires_on=streaming_option_data.get('expiresOn')
-        )
-
-        logger.debug(f'StreamingOption = {streaming_option}.')
-        return streaming_option
-
-
 def transform_streaming_option_json_into_dict(
         streaming_option_data: dict, movie_id: str, country_code: str
 ) -> dict:
@@ -126,45 +95,6 @@ def transform_streaming_option_json_into_dict(
     return streaming_option
 
 
-def convert_image_set_json_into_movie_poster_objects(
-        image_set: dict, movie_id: str, existing_objs: list[MoviePoster] = None
-) -> list[MoviePoster]:
-    """
-    Converts Streaming Availability's Show object's image set of movie posters into MoviePoster objects.
-    Currently, this just takes the vertical posters.
-    A list of existing MoviePosters can be passed in to update them, instead of creating new MoviePoster objects.
-
-    :param image_set: The JSON imageSet object within a Show object from Streaming Availability.
-    :param movie_id: The movie ID that the posters belong to.
-    :param existing_objs: List of MoviePosters, retrieved from the database, to be updated.
-    :return: A list of MoviePosters.
-    """
-
-    poster_type = 'verticalPoster'
-    movie_posters = []
-
-    for poster_size, link in image_set[poster_type].items():
-        existing_obj = None
-
-        # find MoviePoster in list and pop it
-        # iterating thru list is fine, since there will only be at most 4 types of posters, with 5 sizes for each
-        if existing_objs:
-            for i in range(len(existing_objs)):
-                if existing_objs[i].type == poster_type and existing_objs[i].size == poster_size:
-                    existing_obj = existing_objs.pop(i)
-                    break
-
-        movie_poster = existing_obj or MoviePoster()
-        movie_poster.movie_id = movie_id
-        movie_poster.type = poster_type
-        movie_poster.size = poster_size
-        movie_poster.link = link
-
-        movie_posters.append(movie_poster)
-
-    return movie_posters
-
-
 def transform_image_set_json_into_movie_poster_list(image_set: dict, movie_id: str) -> list[dict]:
     """
     Transforms Streaming Availability API's show's image set JSON into a dictionary
@@ -191,68 +121,6 @@ def transform_image_set_json_into_movie_poster_list(image_set: dict, movie_id: s
 
     logger.debug(f'Transformed movie posters = {movie_posters}')
     return movie_posters
-
-
-def store_streaming_options(country_streaming_options_data: dict, movie_id: str) -> None:
-    """
-    Goes through lists of streaming options from within a Show object from Streaming Availability
-    and adds them to the database.
-
-    :param country_streaming_options_data: The JSON streamingOptions object retrieved within a Show object from
-        Streaming Availability.  This is the plural form, which contains a dictionary of countries, where each country
-        contains lists of streaming options.
-    :param movie_id: The movie ID that this country_streaming_options_data belongs to.
-    """
-
-    for country_code, streaming_options_data in country_streaming_options_data.items():
-
-        # Deleting old streaming options, since "updated" changes from Streaming Availability API can contain
-        # additions, removals, and modifications.
-        # It is also not easy to find an old StreamingOption, since there can be multiple streaming options
-        # for a movie, country, and streaming service, such as when there are different languages for a movie.
-        # Once there is a change, for example if the link changes, it might not be possible to find the old one.
-        db.session.query(StreamingOption).filter_by(
-            movie_id=movie_id,
-            country_code=country_code
-        ).delete()
-        db.session.commit()
-
-        for streaming_option_data in streaming_options_data:
-            streaming_option_object = convert_streaming_option_json_into_object(
-                streaming_option_data, movie_id, country_code)
-
-            if streaming_option_object:
-                logger.info(f'Adding/updating {streaming_option_object.movie_id}-'
-                            f'{streaming_option_object.country_code}-'
-                            f'{streaming_option_object.service_id} '
-                            f'streaming option to session and database.')
-                db.session.add(streaming_option_object)
-
-    db.session.commit()
-
-
-def store_movie_and_streaming_options(show: dict) -> None:
-    """
-    Stores the movie and its streaming options from a Show object from Streaming Availability.
-
-    :param show: The JSON Show object retrieved from a response from Streaming Availability.
-    """
-
-    existing_movie = db.session.query(Movie).get(show['id'])
-    movie = convert_show_json_into_movie_object(show, existing_movie)
-
-    existing_movie_posters = db.session.query(MoviePoster).filter_by(movie_id=show['id']).all()
-    movie_posters = convert_image_set_json_into_movie_poster_objects(
-        show['imageSet'], show['id'], existing_movie_posters)
-
-    logger.info(f'Adding/updating Movie {movie.id} ({movie.title}) to session and database.')
-    logger.info(f'Adding {len(movie_posters)} posters from Movie {show['id']} '
-                f'({show['title']}) to session and database.')
-
-    db.session.add_all([movie, *movie_posters])
-    db.session.commit()
-
-    store_streaming_options(show['streamingOptions'], show['id'])
 
 
 def gather_streaming_options(country_streaming_options_data: dict, movie_id: str) -> list[dict]:
