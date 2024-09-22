@@ -20,6 +20,7 @@ from flask_login import LoginManager
 from src.adapters.streaming_availability_adapter import (
     convert_show_json_into_movie_object, transform_show)
 from src.exceptions.base_exceptions import FreeStreamMoviesClientError
+from src.exceptions.DatabaseError import DatabaseError
 from src.exceptions.UserRegistrationError import UserRegistrationError
 from src.forms.user_forms import LoginUserForm, RegisterUserForm
 from src.models.common import connect_db, db
@@ -30,6 +31,7 @@ from src.models.service import Service
 from src.models.streaming_option import StreamingOption
 from src.models.user import User
 from src.util.client_input_validations import has_comma_in_query_parameters
+from src.util.logger import create_logger
 
 # ==================================================
 
@@ -39,6 +41,8 @@ STREAMING_AVAILABILITY_BASE_URL = "https://streaming-availability.p.rapidapi.com
 
 COOKIE_COUNTRY_CODE_NAME = 'countryCode'
 DEFAULT_COUNTRY_CODE = 'us'
+
+logger = create_logger(__name__, 'src/logs/app.log')
 
 # --------------------------------------------------
 
@@ -108,6 +112,9 @@ def create_app(db_name, testing=False):
             except UserRegistrationError as e:
                 flash(f"Invalid input(s) on registration form: "
                       f"{str(e)}", "danger")
+
+            except DatabaseError as e:
+                flash(e)
 
         return render_template("users/registration.html", form=form)
 
@@ -255,7 +262,20 @@ def create_app(db_name, testing=False):
                 Movie.upsert_database(data['movies'])
                 MoviePoster.upsert_database(data['movie_posters'])
                 StreamingOption.insert_database(data['streaming_options'])
-                db.session.commit()
+
+                try:
+                    db.session.commit()
+                except Exception as e:
+                    db.session.rollback()
+                    logger.error('Exception encountered when visiting movie details webpage '
+                                 'and committing new movie data to database.\n'
+                                 f'Movie is {show['id']}: {show['title']}.\n'
+                                 f'Error is {type(e)}:\n'
+                                 f'{e}')
+                    return render_template(
+                        'error.html',
+                        status_code=500,
+                        message='Server exception encountered when saving movie data.'), 500
 
                 # Temporary Movie object used to store data.
                 # This is different than the same Movie retrieved from the database.

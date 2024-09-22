@@ -1,8 +1,14 @@
 from src.adapters.streaming_availability_adapter import transform_show
+from src.exceptions.DatabaseError import DatabaseError
 from src.models.common import db
 from src.models.streaming_option import StreamingOption
+from src.util.logger import create_logger
 
 # ==================================================
+
+logger = create_logger(__name__, 'src/logs/seeder_updater_helpers.log')
+
+# --------------------------------------------------
 
 
 def delete_country_movie_streaming_options(movie_id, country_code) -> None:
@@ -22,7 +28,15 @@ def delete_country_movie_streaming_options(movie_id, country_code) -> None:
         movie_id=movie_id,
         country_code=country_code
     ).delete()
-    db.session.commit()
+
+    try:
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        logger.error('Exception encountered when deleting StreamingOptions.'
+                     f'Error is {type(e)}:\n'
+                     f'{e}')
+        raise DatabaseError('Server exception encountered when deleting streaming options.')
 
 
 def make_unique_transformed_show_data(show) -> dict:

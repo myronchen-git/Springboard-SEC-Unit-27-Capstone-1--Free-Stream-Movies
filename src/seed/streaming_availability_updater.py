@@ -15,6 +15,7 @@ import requests
 from src.app import RAPID_API_KEY, create_app
 from src.exceptions.StreamingAvailabilityApiError import \
     StreamingAvailabilityApiError
+from src.exceptions.UpsertError import UpsertError
 from src.models.common import connect_db, db
 from src.models.country_service import CountryService
 from src.models.movie import Movie
@@ -107,7 +108,16 @@ def get_updated_movies_and_streaming_options() -> None:
     Movie.upsert_database(list(data_for_all_shows['movies'].values()))
     MoviePoster.upsert_database(list(data_for_all_shows['movie_posters'].values()))
     StreamingOption.insert_database(list(data_for_all_shows['streaming_options'].values()))
-    db.session.commit()
+
+    try:
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        message = 'Exception encountered when committing updated movie data.'
+        logger.error(f'{message}\n'
+                     f'Error is {type(e)}:\n'
+                     f'{e}')
+        raise UpsertError(message)
 
 
 def get_updated_movies_and_streams_from_one_request(

@@ -13,6 +13,8 @@ import time
 import requests
 
 from src.app import RAPID_API_KEY, create_app
+from src.exceptions.DatabaseError import DatabaseError
+from src.exceptions.UpsertError import UpsertError
 from src.models.common import connect_db, db
 from src.models.country_service import CountryService
 from src.models.movie import Movie
@@ -94,7 +96,15 @@ def seed_services() -> None:
 
         # finally committing the data, all at once, to avoid multiple writes to database
         logger.debug('Committing services and countries-services.')
-        db.session.commit()
+        try:
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            message = 'Exception encountered when committing new services to database.'
+            logger.error(f'{message}\n'
+                         f'Error is {type(e)}:\n'
+                         f'{e}')
+            raise DatabaseError(message)
 
     else:
         logger.error(f'Unsuccessful response from API: '
@@ -226,7 +236,16 @@ def seed_movies_and_streams() -> None:
     Movie.upsert_database(list(data_for_all_shows['movies'].values()))
     MoviePoster.upsert_database(list(data_for_all_shows['movie_posters'].values()))
     StreamingOption.insert_database(list(data_for_all_shows['streaming_options'].values()))
-    db.session.commit()
+
+    try:
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        message = 'Exception encountered when committing new movie data.'
+        logger.error(f'{message}\n'
+                     f'Error is {type(e)}:\n'
+                     f'{e}')
+        raise UpsertError(message)
 
 # ==================================================
 

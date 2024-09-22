@@ -6,12 +6,16 @@ from flask_login import UserMixin
 from sqlalchemy import CheckConstraint
 from sqlalchemy.exc import IntegrityError
 
+from src.exceptions.DatabaseError import DatabaseError
 from src.exceptions.UserRegistrationError import UserRegistrationError
 from src.models.common import db
+from src.util.logger import create_logger
 
 # ==================================================
 
 bcrypt = Bcrypt()
+
+logger = create_logger(__name__, 'src/logs/user.log')
 
 # --------------------------------------------------
 
@@ -111,6 +115,12 @@ class User(db.Model, UserMixin):
         except IntegrityError:  # can catch other non-duplicate integrity errors; need to revisit
             db.session.rollback()
             raise UserRegistrationError("Duplicate username or email.")
+        except Exception as e:
+            db.session.rollback()
+            logger.error('Exception encountered when committing new user to database.\n'
+                         f'Error is {type(e)}:\n'
+                         f'{e}')
+            raise DatabaseError('Server exception encountered when registering a user.')
 
     @classmethod
     def authenticate(cls, username: str, password: str) -> Self | False:
