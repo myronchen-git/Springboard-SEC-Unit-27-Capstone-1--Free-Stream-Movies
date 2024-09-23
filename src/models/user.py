@@ -82,8 +82,9 @@ class User(db.Model, UserMixin):
 
         :param user_data: A dict containing all of the User properties except id.
         :return: User object if successful.
-        :raises UserRegistrationError: If user_data does not have all of the properties, excluding id;
+        :raise UserRegistrationError: If user_data does not have all of the properties, excluding id;
             or if database throws an error, such as if the username or email is already taken.
+        :raise DatabaseError: If any other error is thrown when committing to database.
         """
 
         required_properties = [

@@ -7,5 +7,5 @@ class StreamingAvailabilityApiError(FreeStreamMoviesServerError):
     that is not 200 and not the fault of the client.
     """
 
-    def __init__(self, message):
-        super().__init__(message)
+    def __init__(self, message, status_code=500):
+        super().__init__(message, status_code)

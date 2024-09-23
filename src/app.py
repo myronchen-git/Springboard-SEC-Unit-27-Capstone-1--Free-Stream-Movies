@@ -19,7 +19,7 @@ from flask_login import LoginManager
 
 from src.adapters.streaming_availability_adapter import (
     convert_show_json_into_movie_object, transform_show)
-from src.exceptions.base_exceptions import FreeStreamMoviesClientError
+from src.exceptions.base_exceptions import FreeStreamMoviesError
 from src.exceptions.DatabaseError import DatabaseError
 from src.exceptions.UserRegistrationError import UserRegistrationError
 from src.forms.user_forms import LoginUserForm, RegisterUserForm
@@ -111,10 +111,10 @@ def create_app(db_name, testing=False):
 
             except UserRegistrationError as e:
                 flash(f"Invalid input(s) on registration form: "
-                      f"{str(e)}", "danger")
+                      f"{e.message}", "danger")
 
             except DatabaseError as e:
-                flash(e)
+                flash(e.message)
 
         return render_template("users/registration.html", form=form)
 
@@ -207,8 +207,8 @@ def create_app(db_name, testing=False):
         try:
             movie_posters = MoviePoster.get_movie_posters(movie_ids, types, sizes)
             return MoviePoster.convert_list_to_dict(movie_posters)
-        except FreeStreamMoviesClientError as e:
-            return {"message": str(e)}, 400
+        except FreeStreamMoviesError as e:
+            return {"message": e.message}, 400
 
     # --------------------------------------------------
     # movies

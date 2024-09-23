@@ -229,7 +229,7 @@ def get_updated_movies_and_streams_from_one_request(
     else:
         logger.error(f'Unsuccessful response from API: '
                      f'status code {resp.status_code}: {body.get('message')}.')
-        raise StreamingAvailabilityApiError(f'Status code {resp.status_code}: {body.get('message')}.')
+        raise StreamingAvailabilityApiError(body.get('message'), resp.status_code)
 
 
 # ==================================================
