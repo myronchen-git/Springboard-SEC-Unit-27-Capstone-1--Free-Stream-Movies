@@ -11,14 +11,11 @@ sys.path.append(root_dir)  # nopep8
 import os
 
 import flask_login
-import requests
 from dotenv import load_dotenv
 from flask import Flask, flash, redirect, render_template, request, url_for
 # from flask_debugtoolbar import DebugToolbarExtension
 from flask_login import LoginManager
 
-from src.adapters.streaming_availability_adapter import (
-    convert_show_json_into_movie_object, transform_show)
 from src.exceptions.base_exceptions import FreeStreamMoviesError
 from src.exceptions.DatabaseError import DatabaseError
 from src.exceptions.UserRegistrationError import UserRegistrationError
@@ -30,6 +27,7 @@ from src.models.movie_poster import MoviePoster
 from src.models.service import Service
 from src.models.streaming_option import StreamingOption
 from src.models.user import User
+from src.services.app_service import AppService
 from src.util.client_input_validations import has_comma_in_query_parameters
 from src.util.logger import create_logger
 
@@ -41,6 +39,8 @@ STREAMING_AVAILABILITY_BASE_URL = "https://streaming-availability.p.rapidapi.com
 
 COOKIE_COUNTRY_CODE_NAME = 'countryCode'
 DEFAULT_COUNTRY_CODE = 'us'
+
+app_service = AppService()
 
 logger = create_logger(__name__, 'src/logs/app.log')
 
@@ -218,89 +218,67 @@ def create_app(db_name, testing=False):
     def search_titles():
         """Calls Streaming Availability API to search for a specific movie."""
 
-        country_code = request.cookies.get(COOKIE_COUNTRY_CODE_NAME, DEFAULT_COUNTRY_CODE)
-        title = request.args.get('title')
+        try:
+            country_code = request.cookies.get(COOKIE_COUNTRY_CODE_NAME, DEFAULT_COUNTRY_CODE)
+            title = request.args.get('title')
 
-        if not title:
-            return redirect(url_for("home"))
+            if not title:
+                return redirect(url_for("home"))
 
-        url = f"{STREAMING_AVAILABILITY_BASE_URL}/shows/search/title"
-        headers = {'X-RapidAPI-Key': RAPID_API_KEY}
-        querystring = {"country": country_code,
-                       "title": title,
-                       "show_type": "movie"}
-
-        resp = requests.get(url, headers=headers, params=querystring)
-
-        if resp.status_code == 200:
-            movies = resp.json()
-
+            movies = app_service.search_movies_by_title(country_code, title)
             return render_template("movies/search_results.html", movies=movies)
 
-        else:
+        except FreeStreamMoviesError as e:
             return render_template(
                 'error.html',
-                status_code=resp.status_code,
-                message=resp.reason
-            ), resp.status_code
+                status_code=e.status_code,
+                message=e.message
+            ), e.status_code
+
+        except Exception as e:
+            return render_template(
+                'error.html',
+                status_code=500,
+                message='Internal server error.'
+            ), 500
 
     @app.route('/movie/<movie_id>')
     def movie_details_page(movie_id):
         """Displays a specified movie's details page."""
 
-        movie = db.session.get(Movie, movie_id)
+        try:
+            movie = db.session.get(Movie, movie_id)
 
-        if not movie:
-            url = f"{STREAMING_AVAILABILITY_BASE_URL}/shows/{movie_id}"
-            headers = {'X-RapidAPI-Key': RAPID_API_KEY}
+            if not movie:
 
-            resp = requests.get(url, headers=headers)
-            show = resp.json()
+                movie = app_service.get_movie_data(movie_id)
 
-            if resp.status_code == 200:
-                data = transform_show(show)
-                Movie.upsert_database(data['movies'])
-                MoviePoster.upsert_database(data['movie_posters'])
-                StreamingOption.insert_database(data['streaming_options'])
+            country_code = request.cookies.get(COOKIE_COUNTRY_CODE_NAME, DEFAULT_COUNTRY_CODE)
+            streaming_options = db.session.query(StreamingOption).filter_by(
+                country_code=country_code, movie_id=movie.id).all()
 
-                try:
-                    db.session.commit()
-                except Exception as e:
-                    db.session.rollback()
-                    logger.error('Exception encountered when visiting movie details webpage '
-                                 'and committing new movie data to database.\n'
-                                 f'Movie is {show['id']}: {show['title']}.\n'
-                                 f'Error is {type(e)}:\n'
-                                 f'{e}')
-                    return render_template(
-                        'error.html',
-                        status_code=500,
-                        message='Server exception encountered when saving movie data.'), 500
+            movie_poster = MoviePoster.get_movie_posters([movie.id], ["verticalPoster"], ["w360"])[0]
 
-                # Temporary Movie object used to store data.
-                # This is different than the same Movie retrieved from the database.
-                # Do not add to database session.
-                movie = convert_show_json_into_movie_object(show)
+            return render_template(
+                "movies/details.html",
+                movie=movie,
+                streaming_options=streaming_options,
+                movie_poster=movie_poster
+            )
 
-            else:
-                return render_template(
-                    'error.html',
-                    status_code=resp.status_code,
-                    message=resp.reason
-                ), resp.status_code
+        except FreeStreamMoviesError as e:
+            return render_template(
+                'error.html',
+                status_code=e.status_code,
+                message=e.message
+            ), e.status_code
 
-        country_code = request.cookies.get(COOKIE_COUNTRY_CODE_NAME, DEFAULT_COUNTRY_CODE)
-        streaming_options = db.session.query(StreamingOption).filter_by(
-            country_code=country_code, movie_id=movie.id).all()
-
-        movie_poster = MoviePoster.get_movie_posters([movie.id], ["verticalPoster"], ["w360"])[0]
-
-        return render_template(
-            "movies/details.html",
-            movie=movie,
-            streaming_options=streaming_options,
-            movie_poster=movie_poster
-        )
+        except Exception as e:
+            return render_template(
+                'error.html',
+                status_code=500,
+                message='Internal server error.'
+            ), 500
 
     # --------------------------------------------------
     # helper methods

@@ -43,7 +43,7 @@ db.create_all()
 # --------------------------------------------------
 
 
-@patch('src.app.requests', autospec=True)
+@patch('src.services.app_service.requests', autospec=True)
 class MovieSearchViewIntegrationTests(TestCase):
     """Integration tests for views involving movie searches.  This mocks calls to external API."""
 
@@ -131,11 +131,10 @@ class MovieSearchViewIntegrationTests(TestCase):
         query_string = {"title": title}
 
         status_code = 404
-        reason = "Not Found"
+        reason = f'Error when searching for movie &#34;{title}&#34;.'
 
         mock_response = MagicMock(name='mock_response')
         mock_response.status_code = status_code
-        mock_response.reason = reason
         mock_requests.get.return_value = mock_response
 
         expected_api_url = f"{STREAMING_AVAILABILITY_BASE_URL}/shows/search/title"
@@ -157,7 +156,7 @@ class MovieSearchViewIntegrationTests(TestCase):
             mock_requests.get.assert_called_once_with(expected_api_url, headers=ANY, params=expected_api_params)
 
 
-@patch('src.app.requests', autospec=True)
+@patch('src.services.app_service.requests', autospec=True)
 class MovieDetailsViewIntegrationTests(TestCase):
     """Integration tests for the view of a movie's details page.  This mocks calls to external API."""
 
@@ -301,11 +300,10 @@ class MovieDetailsViewIntegrationTests(TestCase):
         url = url_for('movie_details_page', movie_id=movie_id)
 
         status_code = 404
-        reason = "Not Found"
+        reason = f'Error when getting movie details for movie ID {movie_id}.'
 
         mock_response = MagicMock(name='mock_response')
         mock_response.status_code = status_code
-        mock_response.reason = reason
         mock_requests.get.return_value = mock_response
 
         expected_api_url = f"{STREAMING_AVAILABILITY_BASE_URL}/shows/{movie_id}"
