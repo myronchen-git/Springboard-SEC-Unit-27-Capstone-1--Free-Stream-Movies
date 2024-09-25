@@ -136,15 +136,19 @@ def create_app(db_name, testing=False):
         form = LoginUserForm()
 
         if form.validate_on_submit():
-            user = User.authenticate(form.username.data, form.password.data)
+            try:
+                user = User.authenticate(form.username.data, form.password.data)
 
-            if user:
-                flask_login.login_user(user, remember=True)
+                if user:
+                    flask_login.login_user(user, remember=True)
 
-                flash("Successfully logged in.", "success")
-                return redirect(url_for("home"))
+                    flash("Successfully logged in.", "success")
+                    return redirect(url_for("home"))
 
-            flash("Invalid credentials.", 'danger')
+                flash("Invalid credentials.", 'danger')
+
+            except FreeStreamMoviesError as e:
+                flash(e.message)
 
         return render_template("users/login.html", form=form)
 

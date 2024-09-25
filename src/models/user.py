@@ -4,7 +4,7 @@ from typing import Self
 from flask_bcrypt import Bcrypt
 from flask_login import UserMixin
 from sqlalchemy import CheckConstraint
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy.exc import DBAPIError, IntegrityError
 
 from src.exceptions.DatabaseError import DatabaseError
 from src.exceptions.UserRegistrationError import UserRegistrationError
@@ -134,8 +134,16 @@ class User(db.Model, UserMixin):
         :return: User object if valid, else returns False.
         """
 
-        user = db.session.query(User).filter_by(
-            username=username).one_or_none()
+        try:
+            user = db.session.query(User).filter_by(
+                username=username).one_or_none()
+
+        except DBAPIError as e:
+            db.session.rollback()
+            logger.error('Error occurred when retrieving user for authentication:\n'
+                         f'username = {username}\n'
+                         f'exception =\n{str(e)}')
+            raise DatabaseError('Server exception encountered when authenticating a user.')
 
         if user and bcrypt.check_password_hash(user.password, password):
             return user
