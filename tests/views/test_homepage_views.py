@@ -9,8 +9,10 @@ sys.path.append(root_dir)  # nopep8
 # --------------------------------------------------
 
 from unittest import TestCase
+from unittest.mock import patch
 
 from flask import url_for
+from sqlalchemy.exc import DatabaseError, DBAPIError
 
 from src.app import COOKIE_COUNTRY_CODE_NAME, create_app
 from src.models.common import connect_db, db
@@ -45,6 +47,8 @@ class HomepageViewTestCase(TestCase):
         db.session.query(Movie).delete()
         db.session.commit()
 
+        self.url = url_for("home")
+
     def tearDown(self):
         db.session.rollback()
 
@@ -52,7 +56,6 @@ class HomepageViewTestCase(TestCase):
         """Tests that the homepage renders with a country's streaming services."""
 
         # Arrange
-        url = url_for("home")
 
         # setting up countries
         country_codes = ['us']
@@ -72,7 +75,7 @@ class HomepageViewTestCase(TestCase):
         # Act
         with app.test_client() as client:
             client.set_cookie(COOKIE_COUNTRY_CODE_NAME, country_codes[0])
-            resp = client.get(url, follow_redirects=True)
+            resp = client.get(self.url, follow_redirects=True)
             html = resp.get_data(as_text=True)
 
         # Assert
@@ -87,7 +90,6 @@ class HomepageViewTestCase(TestCase):
         """Tests that the homepage renders only the streaming services available in a provided country."""
 
         # Arrange
-        url = url_for("home")
 
         # setting up countries
         country_codes = ['us', 'ca']
@@ -116,7 +118,7 @@ class HomepageViewTestCase(TestCase):
 
             for i in range(len(country_codes)):
                 client.set_cookie(COOKIE_COUNTRY_CODE_NAME, country_codes[i])
-                resp = client.get(url, follow_redirects=True)
+                resp = client.get(self.url, follow_redirects=True)
                 html = resp.get_data(as_text=True)
 
                 response_status_codes.append(resp.status_code)
@@ -135,18 +137,36 @@ class HomepageViewTestCase(TestCase):
         """Tests that the homepage renders without any streaming services if a country doesn't have any free ones."""
 
         # Arrange
-        url = url_for("home")
-
-        # setting up countries
         country_codes = ['us']
 
         # Act
         with app.test_client() as client:
             client.set_cookie(COOKIE_COUNTRY_CODE_NAME, country_codes[0])
-            resp = client.get(url, follow_redirects=True)
+            resp = client.get(self.url, follow_redirects=True)
             html = resp.get_data(as_text=True)
 
         # Assert
         self.assertEqual(resp.status_code, 200)
 
         self.assertIn('No free streaming services', html)
+
+    @patch('src.app.db', autospec=True)
+    def test_display_error_page_when_session_throws_exception(self, mock_db):
+        """If the SQLAlchemy session throws an exception, an error page should be shown."""
+
+        # Arrange
+        country_codes = ['us']
+
+        # Arrange mocks
+        mock_db.session.query.return_value.join.return_value.filter.return_value.all.side_effect = \
+            DBAPIError(statement=None, params=None, orig=DatabaseError)
+
+        # Act
+        with app.test_client() as client:
+            client.set_cookie(COOKIE_COUNTRY_CODE_NAME, country_codes[0])
+            resp = client.get(self.url, follow_redirects=True)
+            html = resp.get_data(as_text=True)
+
+        # Assert
+        self.assertEqual(resp.status_code, 500)
+        self.assertIn('Unable to retrieve or render streaming services.', html)

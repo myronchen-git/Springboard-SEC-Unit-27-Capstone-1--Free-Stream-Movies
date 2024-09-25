@@ -2,11 +2,17 @@ from enum import StrEnum
 from typing import Self
 
 from sqlalchemy.dialects import postgresql
+from sqlalchemy.exc import DBAPIError
 
 from src.exceptions.UnrecognizedValueError import UnrecognizedValueError
 from src.models.common import db
+from src.util.logger import create_logger
 
 # ==================================================
+
+logger = create_logger(__name__, 'src/logs/movie_poster.log')
+
+# --------------------------------------------------
 
 
 class MoviePoster(db.Model):
@@ -71,14 +77,24 @@ class MoviePoster(db.Model):
                 raise UnrecognizedValueError(
                     f'Movie poster size(s) is unrecognized.  Supported sizes are {supported_sizes}.')
 
-        return db.session\
-            .query(MoviePoster)\
-            .filter(
-                MoviePoster.movie_id.in_(movie_ids),
-                MoviePoster.type.in_(types),
-                MoviePoster.size.in_(sizes)
-            )\
-            .all()
+        try:
+            return db.session\
+                .query(MoviePoster)\
+                .filter(
+                    MoviePoster.movie_id.in_(movie_ids),
+                    MoviePoster.type.in_(types),
+                    MoviePoster.size.in_(sizes)
+                )\
+                .all()
+
+        except DBAPIError as e:
+            db.session.rollback()
+            logger.error('Error occurred when retrieving movie posters for\n'
+                         f'movie_ids = {movie_ids}\n'
+                         f'types = {types}\n'
+                         f'sizes = {sizes}\n'
+                         f'exception =\n{str(e)}')
+            raise e
 
     @classmethod
     def convert_list_to_dict(cls, movie_posters: list[Self]) -> dict:

@@ -9,8 +9,10 @@ sys.path.append(root_dir)  # nopep8
 # --------------------------------------------------
 
 from unittest import TestCase
+from unittest.mock import patch
 
 from flask import url_for
+from sqlalchemy.exc import DatabaseError, DBAPIError
 
 from src.app import create_app
 from src.models.common import connect_db, db
@@ -49,6 +51,8 @@ class MoviePosterApiTestCase(TestCase):
         db.session.add_all(self.movie_posters)
         db.session.commit()
 
+        self.url = url_for('get_movie_posters')
+
     def tearDown(self):
         db.session.rollback()
 
@@ -56,13 +60,12 @@ class MoviePosterApiTestCase(TestCase):
         """Calling the get_movie_posters API route with valid query parameters should return a JSON."""
 
         # Arrange
-        url = url_for('get_movie_posters')
         queries = {'movieId': '0', 'type': 'verticalPoster', 'size': 'w240'}
         expected_movie_poster_link = self.movie_posters[0].link
 
         # Act
         with app.test_client() as client:
-            resp = client.get(url, query_string=queries)
+            resp = client.get(self.url, query_string=queries)
             json = resp.get_json()
 
         # Assert
@@ -76,7 +79,6 @@ class MoviePosterApiTestCase(TestCase):
         """
 
         # Arrange
-        url = url_for('get_movie_posters')
         queries = [{'type': 'verticalPoster', 'size': 'w240'},
                    {'movieId': '0', 'size': 'w240'},
                    {'movieId': '0', 'type': 'verticalPoster'}]
@@ -85,7 +87,7 @@ class MoviePosterApiTestCase(TestCase):
         for query_string in queries:
             with self.subTest(query_string=query_string):
                 with app.test_client() as client:
-                    resp = client.get(url, query_string=query_string)
+                    resp = client.get(self.url, query_string=query_string)
 
         # Assert
                     self.assertEqual(resp.status_code, 400)
@@ -97,12 +99,11 @@ class MoviePosterApiTestCase(TestCase):
         """
 
         # Arrange
-        url = url_for('get_movie_posters')
         queries = {'movieId': '0', 'type': 'verticalPoster', 'size': 'w240, w360'}
 
         # Act
         with app.test_client() as client:
-            resp = client.get(url, query_string=queries)
+            resp = client.get(self.url, query_string=queries)
 
         # Assert
             self.assertEqual(resp.status_code, 400)
@@ -114,12 +115,31 @@ class MoviePosterApiTestCase(TestCase):
         """
 
         # Arrange
-        url = url_for('get_movie_posters')
         queries = {'movieId': '0', 'type': 'diagonalPoster', 'size': 'w240'}
 
         # Act
         with app.test_client() as client:
-            resp = client.get(url, query_string=queries)
+            resp = client.get(self.url, query_string=queries)
 
         # Assert
             self.assertEqual(resp.status_code, 400)
+
+    @patch('src.models.movie_poster.db', autospec=True)
+    def test_respond_with_error_when_session_throws_exception(self, mock_db):
+        """If the SQLAlchemy session throws an exception, an error response should be given."""
+
+        # Arrange
+        queries = {'movieId': '0', 'type': 'verticalPoster', 'size': 'w240'}
+
+        # Arrange mocks
+        mock_db.session.\
+            query.return_value.\
+            filter.return_value.\
+            all.side_effect = DBAPIError(statement=None, params=None, orig=DatabaseError)
+
+        # Act
+        with app.test_client() as client:
+            resp = client.get(self.url, query_string=queries)
+
+        # Assert
+            self.assertEqual(resp.status_code, 500)

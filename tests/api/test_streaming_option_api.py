@@ -9,8 +9,10 @@ sys.path.append(root_dir)  # nopep8
 # --------------------------------------------------
 
 from unittest import TestCase
+from unittest.mock import patch
 
 from flask import url_for
+from sqlalchemy.exc import DatabaseError, DBAPIError
 
 from src.app import create_app
 from src.models.common import connect_db, db
@@ -54,6 +56,12 @@ class StreamingOptionApiTestCase(TestCase):
         db.session.query(StreamingOption).delete()
         db.session.commit()
 
+        self.url = url_for(
+            "get_streaming_options",
+            country_code=StreamingOptionApiTestCase.COUNTRY_CODE,
+            service_id=StreamingOptionApiTestCase.SERVICE_ID
+        )
+
     def tearDown(self):
         db.session.rollback()
 
@@ -64,12 +72,6 @@ class StreamingOptionApiTestCase(TestCase):
         """
 
         # Arrange
-        url = url_for(
-            "get_streaming_options",
-            country_code=StreamingOptionApiTestCase.COUNTRY_CODE,
-            service_id=StreamingOptionApiTestCase.SERVICE_ID
-        )
-
         streaming_options = streaming_option_generator(
             21,
             StreamingOptionApiTestCase.movie_id,
@@ -82,7 +84,7 @@ class StreamingOptionApiTestCase(TestCase):
 
         # Act
         with app.test_client() as client:
-            resp = client.get(url)
+            resp = client.get(self.url)
             json = resp.get_json()
 
         # Assert
@@ -102,12 +104,6 @@ class StreamingOptionApiTestCase(TestCase):
         """
 
         # Arrange
-        url = url_for(
-            "get_streaming_options",
-            country_code=StreamingOptionApiTestCase.COUNTRY_CODE,
-            service_id=StreamingOptionApiTestCase.SERVICE_ID
-        )
-
         streaming_options = streaming_option_generator(
             21,
             StreamingOptionApiTestCase.movie_id,
@@ -120,7 +116,7 @@ class StreamingOptionApiTestCase(TestCase):
 
         # Act
         with app.test_client() as client:
-            resp = client.get(url, query_string={"page": 2})
+            resp = client.get(self.url, query_string={"page": 2})
             json = resp.get_json()
 
         # Assert
@@ -132,3 +128,22 @@ class StreamingOptionApiTestCase(TestCase):
                                     for ind, option in enumerate(streaming_options)
                                     if ind >= 20]
             self.assertEqual(json['items'], second_page_of_items)
+
+    @patch('src.models.streaming_option.db', autospec=True)
+    def test_respond_with_error_when_session_throws_exception(self, mock_db):
+        """If the SQLAlchemy session throws an exception, an error response should be given."""
+
+        # Arrange mocks
+        mock_db.session.\
+            query.return_value.\
+            join.return_value.\
+            filter.return_value.\
+            order_by.return_value.\
+            paginate.side_effect = DBAPIError(statement=None, params=None, orig=DatabaseError)
+
+        # Act
+        with app.test_client() as client:
+            resp = client.get(self.url)
+
+        # Assert
+            self.assertEqual(resp.status_code, 500)

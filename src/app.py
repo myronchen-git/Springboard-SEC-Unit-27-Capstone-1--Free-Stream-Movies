@@ -83,13 +83,24 @@ def create_app(db_name, testing=False):
 
         country_code = request.cookies.get(COOKIE_COUNTRY_CODE_NAME, DEFAULT_COUNTRY_CODE)
 
-        services = db.session\
-            .query(Service)\
-            .join(CountryService, Service.id == CountryService.service_id)\
-            .filter(CountryService.country_code == country_code)\
-            .all()
+        try:
+            services = db.session\
+                .query(Service)\
+                .join(CountryService, Service.id == CountryService.service_id)\
+                .filter(CountryService.country_code == country_code)\
+                .all()
+            return render_template('home.html', services=services)
 
-        return render_template('home.html', services=services)
+        except Exception as e:
+            db.session.rollback()
+            logger.error('Error occurred when retrieving or rendering streaming services for '
+                         f'country "{country_code}".\n' + str(e))
+
+            return render_template(
+                'error.html',
+                status_code=500,
+                message='Unable to retrieve or render streaming services.'
+            ), 500
 
     # --------------------------------------------------
     # users
@@ -166,20 +177,24 @@ def create_app(db_name, testing=False):
     def get_streaming_options(country_code, service_id):
         """Retrieves a list of movie streaming options for a specified country and streaming service."""
 
-        page = request.args.get('page')
-        page = int(page) if page else None
+        try:
+            page = request.args.get('page')
+            page = int(page) if page else None
 
-        movies_pagination = StreamingOption.get_streaming_options(
-            country_code, service_id, page)
+            movies_pagination = StreamingOption.get_streaming_options(
+                country_code, service_id, page)
 
-        items = [item.toJson() for item in movies_pagination.items]
+            items = [item.toJson() for item in movies_pagination.items]
 
-        return {
-            'items': items,
-            'page': movies_pagination.page,
-            'has_prev': movies_pagination.has_prev,
-            'has_next': movies_pagination.has_next,
-        }
+            return {
+                'items': items,
+                'page': movies_pagination.page,
+                'has_prev': movies_pagination.has_prev,
+                'has_next': movies_pagination.has_next,
+            }
+
+        except Exception as e:
+            return {"message": 'Unable to retrieve streaming options.'}, 500
 
     @app.route('/api/v1/movie-posters')
     def get_movie_posters():
@@ -191,24 +206,29 @@ def create_app(db_name, testing=False):
         Returns JSON {movie_id: {type: {size: link}}}.
         """
 
-        movie_ids = request.args.getlist('movieId')
-        types = request.args.getlist('type')
-        sizes = request.args.getlist('size')
-
-        if not movie_ids or not types or not sizes:
-            return {'message': 'Missing movieId, type, or size query parameters.'}, 400
-
-        if has_comma_in_query_parameters([movie_ids, types, sizes]):
-            return {'message':
-                    'App API does not support comma-separated lists for query parameters '
-                    '(movieId=1234,5678).  Use repeated query parameter assignment '
-                    '(movieId=1234, movieId=5678).'}, 400
-
         try:
-            movie_posters = MoviePoster.get_movie_posters(movie_ids, types, sizes)
-            return MoviePoster.convert_list_to_dict(movie_posters)
-        except FreeStreamMoviesError as e:
-            return {"message": e.message}, 400
+            movie_ids = request.args.getlist('movieId')
+            types = request.args.getlist('type')
+            sizes = request.args.getlist('size')
+
+            if not movie_ids or not types or not sizes:
+                return {'message': 'Missing movieId, type, or size query parameters.'}, 400
+
+            if has_comma_in_query_parameters([movie_ids, types, sizes]):
+                return {'message':
+                        'App API does not support comma-separated lists for query parameters '
+                        '(movieId=1234,5678).  Use repeated query parameter assignment '
+                        '(movieId=1234, movieId=5678).'}, 400
+
+            try:
+                movie_posters = MoviePoster.get_movie_posters(movie_ids, types, sizes)
+                return MoviePoster.convert_list_to_dict(movie_posters)
+
+            except FreeStreamMoviesError as e:
+                return {"message": e.message}, e.status_code
+
+        except Exception as e:
+            return {"message": 'Unable to retrieve movie posters.'}, 500
 
     # --------------------------------------------------
     # movies

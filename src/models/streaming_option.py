@@ -2,11 +2,17 @@ import json
 
 from flask_sqlalchemy.pagination import Pagination
 from sqlalchemy import insert
+from sqlalchemy.exc import DBAPIError
 
 from src.models.common import db
 from src.models.movie import Movie
+from src.util.logger import create_logger
 
 # ==================================================
+
+logger = create_logger(__name__, 'src/logs/streaming_option.log')
+
+# --------------------------------------------------
 
 
 class StreamingOption(db.Model):
@@ -86,15 +92,25 @@ class StreamingOption(db.Model):
         :return: a Flask-SQLAlchemy Pagination object.
         """
 
-        return db.session\
-            .query(StreamingOption)\
-            .join(Movie, StreamingOption.movie_id == Movie.id)\
-            .filter(
-                StreamingOption.country_code == country_code,
-                StreamingOption.service_id == service_id
-            )\
-            .order_by(Movie.rating.desc())\
-            .paginate(page=page)
+        try:
+            return db.session\
+                .query(StreamingOption)\
+                .join(Movie, StreamingOption.movie_id == Movie.id)\
+                .filter(
+                    StreamingOption.country_code == country_code,
+                    StreamingOption.service_id == service_id
+                )\
+                .order_by(Movie.rating.desc())\
+                .paginate(page=page)
+
+        except DBAPIError as e:
+            db.session.rollback()
+            logger.error('Error occurred when retrieving streaming options for\n'
+                         f'country_code = {country_code}\n'
+                         f'service_id = {service_id}\n'
+                         f'page = {page}\n'
+                         f'exception =\n{str(e)}')
+            raise e
 
     @classmethod
     def insert_database(cls, attributes: list[dict]) -> None:
