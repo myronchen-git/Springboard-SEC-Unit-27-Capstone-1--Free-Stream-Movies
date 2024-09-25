@@ -120,7 +120,7 @@ class User(db.Model, UserMixin):
             db.session.rollback()
             logger.error('Exception encountered when committing new user to database.\n'
                          f'Error is {type(e)}:\n'
-                         f'{e}')
+                         f'{str(e)}')
             raise DatabaseError('Server exception encountered when registering a user.')
 
     @classmethod

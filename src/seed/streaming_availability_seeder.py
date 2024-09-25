@@ -103,7 +103,7 @@ def seed_services() -> None:
             message = 'Exception encountered when committing new services to database.'
             logger.error(f'{message}\n'
                          f'Error is {type(e)}:\n'
-                         f'{e}')
+                         f'{str(e)}')
             raise DatabaseError(message)
 
     else:
@@ -244,7 +244,7 @@ def seed_movies_and_streams() -> None:
         message = 'Exception encountered when committing new movie data.'
         logger.error(f'{message}\n'
                      f'Error is {type(e)}:\n'
-                     f'{e}')
+                     f'{str(e)}')
         raise UpsertError(message)
 
 # ==================================================

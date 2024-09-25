@@ -100,7 +100,7 @@ class AppService:
                              'and committing new movie data to database.\n'
                              f'Movie is {show['id']}: {show['title']}.\n'
                              f'Error is {type(e)}:\n'
-                             f'{e}')
+                             f'{str(e)}')
                 raise UpsertError('Server exception encountered when saving movie data.')
 
             # Temporary Movie object used to store data.

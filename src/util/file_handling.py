@@ -30,7 +30,7 @@ def read_services_blacklist() -> set:
 
     except OSError as e:
         logger.error('Unable to open blacklist file.'
-                     f'Error is\n{e}')
+                     f'Error is\n{str(e)}')
         raise FreeStreamMoviesServerError(str(e))
 
 
@@ -51,7 +51,7 @@ def read_json_file_helper(file_location: str) -> dict:
 
     except OSError as e:
         logger.warning('JSON file does not exist.  Returning empty dict.\n'
-                       f'Error is\n{e}')
+                       f'Error is\n{str(e)}')
         return {}
 
 
@@ -73,5 +73,5 @@ def write_json_file_helper(file_location: str, contents: dict) -> None:
 
     except OSError as e:
         logger.error('Unable to write to JSON file.'
-                     f'Error is\n{e}')
+                     f'Error is\n{str(e)}')
         raise FreeStreamMoviesServerError(str(e))

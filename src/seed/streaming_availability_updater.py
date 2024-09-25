@@ -116,7 +116,7 @@ def get_updated_movies_and_streaming_options() -> None:
         message = 'Exception encountered when committing updated movie data.'
         logger.error(f'{message}\n'
                      f'Error is {type(e)}:\n'
-                     f'{e}')
+                     f'{str(e)}')
         raise UpsertError(message)
 
 
