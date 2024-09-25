@@ -12,7 +12,10 @@ from copy import deepcopy
 from unittest import TestCase
 from unittest.mock import ANY, MagicMock, call, patch
 
+from requests.exceptions import RequestException
+
 from src.app import create_app
+from src.exceptions.base_exceptions import FreeStreamMoviesServerError
 from src.models.common import connect_db, db
 from src.seed.streaming_availability_seeder import (
     get_movies_and_streams_from_one_request, seed_movies_and_streams)
@@ -260,6 +263,27 @@ class GetMoviesAndStreamsFromOneRequestUnitTests(TestCase):
 
         # Assert
         self.assertIsNone(result)
+        mock_delete_country_movie_streaming_options.assert_not_called()
+        mock_make_unique_transformed_show_data.assert_not_called()
+
+    def test_when_get_request_raises_an_exception(
+            self,
+            mock_RAPID_API_KEY,
+            mock_requests,
+            mock_delete_country_movie_streaming_options,
+            mock_make_unique_transformed_show_data
+    ):
+        """When the GET request raises an exception, it should be re-raised under an internal exception."""
+
+        # Arrange
+        country = 'us'
+        service_ids = ['service00']
+
+        # Arrange mocks
+        mock_requests.get.side_effect = RequestException()
+
+        # Act/Assert
+        self.assertRaises(FreeStreamMoviesServerError, get_movies_and_streams_from_one_request, country, service_ids)
         mock_delete_country_movie_streaming_options.assert_not_called()
         mock_make_unique_transformed_show_data.assert_not_called()
 

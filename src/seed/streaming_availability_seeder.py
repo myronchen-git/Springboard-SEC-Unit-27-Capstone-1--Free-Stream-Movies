@@ -11,10 +11,12 @@ sys.path.append(root_dir)  # nopep8
 import time
 
 import requests
+from requests.exceptions import RequestException
 from sqlalchemy.exc import DBAPIError
 
 from src.app import RAPID_API_KEY, create_app
 from src.common_constants import BLACKLISTED_SERVICES
+from src.exceptions.base_exceptions import FreeStreamMoviesServerError
 from src.exceptions.DatabaseError import DatabaseError
 from src.exceptions.UpsertError import UpsertError
 from src.models.common import connect_db, db
@@ -148,7 +150,15 @@ def get_movies_and_streams_from_one_request(country_code: str, service_ids: list
         querystring['cursor'] = cursor
 
     # call API
-    resp = requests.get(url, headers=headers, params=querystring)
+    try:
+        resp = requests.get(url, headers=headers, params=querystring)
+    except RequestException as e:
+        message = 'Exception occurred when attempting to make one HTTP request to ' + \
+            'Streaming Availability API to search shows by filters.'
+        logger.error(f'{message}\n'
+                     f'Error is {type(e)}:\n'
+                     f'{str(e)}')
+        raise FreeStreamMoviesServerError(message)
 
     if resp.status_code == 200:
         body = resp.json()
