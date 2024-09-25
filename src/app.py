@@ -163,7 +163,12 @@ def create_app(db_name, testing=False):
 
     @login_manager.user_loader
     def load_user(user_id):
-        return db.session.get(User, user_id)
+        try:
+            return db.session.get(User, user_id)
+        except Exception as e:
+            flash('Unable to load user credentials.')
+            logger.warning("Exception encountered when loading user info for Flask-Login's user loader.\n" + str(e))
+            return None
 
     @login_manager.unauthorized_handler
     def unauthorized_handler():
@@ -274,7 +279,6 @@ def create_app(db_name, testing=False):
             movie = db.session.get(Movie, movie_id)
 
             if not movie:
-
                 movie = app_service.get_movie_data(movie_id)
 
             country_code = request.cookies.get(COOKIE_COUNTRY_CODE_NAME, DEFAULT_COUNTRY_CODE)

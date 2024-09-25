@@ -11,6 +11,7 @@ sys.path.append(root_dir)  # nopep8
 import time
 
 import requests
+from sqlalchemy.exc import DBAPIError
 
 from src.app import RAPID_API_KEY, create_app
 from src.common_constants import BLACKLISTED_SERVICES
@@ -197,7 +198,16 @@ def seed_movies_and_streams() -> None:
     Cursors will be saved into a JSON file.
     """
 
-    countries_services = db.session.query(CountryService).all()
+    try:
+        countries_services = db.session.query(CountryService).all()
+    except DBAPIError as e:
+        db.session.rollback()
+        message = 'Exception encountered when getting countries-services during seeding.'
+        logger.error(f'{message}\n'
+                     f'Error is {type(e)}:\n'
+                     f'{str(e)}')
+        raise DatabaseError(message)
+
     countries_services = CountryService.convert_list_to_dict(countries_services)
 
     cursors = read_json_file_helper(cursor_file_location)

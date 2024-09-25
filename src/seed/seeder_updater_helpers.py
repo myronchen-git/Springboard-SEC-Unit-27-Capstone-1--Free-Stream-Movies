@@ -24,13 +24,14 @@ def delete_country_movie_streaming_options(movie_id, country_code) -> None:
     :param movie_id: The movie ID to delete streaming options for.
     :param country_code: The country to delete streaming options for.
     """
-    db.session.query(StreamingOption).filter_by(
-        movie_id=movie_id,
-        country_code=country_code
-    ).delete()
 
     try:
+        db.session.query(StreamingOption).filter_by(
+            movie_id=movie_id,
+            country_code=country_code
+        ).delete()
         db.session.commit()
+
     except Exception as e:
         db.session.rollback()
         logger.error('Exception encountered when deleting StreamingOptions.'
