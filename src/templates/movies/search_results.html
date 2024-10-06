@@ -5,7 +5,7 @@
 {% block content %}
 <main class="container">
   <section>
-    <h2>Search Results</h2>
+    <h2 class="my-3">Search Results</h2>
 
     {% if movies|length == 0 %}
     <p>No results found.</p>
@@ -24,7 +24,7 @@
                   height="320"
                 /> <!-- The media min-width size will need to match Bootstrap's Extra small size. -->
                 <img
-                  class="img-fluid w-100 h-100 rounded"
+                  class="img-fluid w-100 h-100 rounded-top"
                   src="{{ movie['imageSet']['horizontalPoster']['w480'] }}"
                   alt="Movie poster of {{ movie['title'] }}"
                   width="480"
@@ -36,7 +36,7 @@
             <div class="col-12 col-sm">
               <article class="card-body">
                 <h3 class="card-title">{{ movie['title'] }}</h3>
-                <span>({{ movie['releaseYear'] }})</span>
+                <p class="card-subtitle mb-2">({{ movie['releaseYear'] }})</p>
                 <p class="card-text">{{ movie['overview'] }}</p>
               </article>
             </div>

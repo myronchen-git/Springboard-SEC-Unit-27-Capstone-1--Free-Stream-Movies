@@ -64,3 +64,10 @@ div:has(> .bi):hover {
     color: var(--color-tertiary);
     font-size: 2em;
 }
+
+/* min-width and border-radius numbers are specific to Bootstrap.*/
+@media (min-width: 576px) {
+    .card img.img-fluid {
+        border-radius: 0.375rem 0 0 0.375rem !important;
+    }
+}
