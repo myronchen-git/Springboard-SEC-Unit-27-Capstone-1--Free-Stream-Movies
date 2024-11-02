@@ -100,7 +100,7 @@ class StreamingOption(db.Model):
                     StreamingOption.country_code == country_code,
                     StreamingOption.service_id == service_id
                 )\
-                .order_by(Movie.rating.desc())\
+                .order_by(Movie.rating.desc(), Movie.title, Movie.id)\
                 .paginate(page=page)
 
         except DBAPIError as e:

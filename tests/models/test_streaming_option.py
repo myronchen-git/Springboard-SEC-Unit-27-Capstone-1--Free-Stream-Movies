@@ -148,6 +148,40 @@ class StreamingOptionIntegrationTestsGetStreamingOptions(TestCase):
         self.assertTrue(page1.has_next)
         self.assertFalse(page2.has_next)
 
+    def test_getting_streaming_options_without_duplicate_options_bug(self):
+        """
+        Retrieving pages of streaming options should not display the same movie multiple times.
+        """
+
+        # Arrange
+        db.session.query(Movie).delete()
+        movies = movie_generator(100, 1)
+        db.session.add_all(movies)
+        db.session.commit()
+
+        streaming_options = [
+            streaming_option_generator(1, movie.id, self.country_code, self.service_id)[0]
+            for movie in movies
+        ]
+        db.session.add_all(streaming_options)
+        db.session.commit()
+
+        # Act
+        pages = [
+            StreamingOption.get_streaming_options(self.country_code, self.service_id, i)
+            for i in range(1, 5)
+        ]
+
+        # Assert
+        count_of_a_movie = 0
+
+        for page in pages:
+            for item in page.items:
+                if item.movie_id == movies[0].id:
+                    count_of_a_movie += 1
+
+        self.assertEqual(count_of_a_movie, 1)
+
     # More tests are needed for cases where there are other movies, services, or streaming options.
 
 

@@ -13,7 +13,7 @@ def service_generator(n: int) -> list[Service]:
     """
     Creates n Services, with zero-indexed naming, and returning them in a List.
 
-    :param int: The number of streaming services to create.
+    :param n: The number of streaming services to create.
     :return: A list of fake Services.
     :raise ValueError: If n is negative or over 100.
     """
@@ -38,11 +38,12 @@ def service_generator(n: int) -> list[Service]:
     return output
 
 
-def movie_generator(n: int) -> list[Movie]:
+def movie_generator(n: int, rating: int = None) -> list[Movie]:
     """
     Creates n Movies, with zero-indexed naming, and returning them in a List.
 
-    :param int: The number of movies to create.
+    :param n: The number of movies to create.
+    :param rating: The rating the movies should have.
     :return: A list of fake Movies.
     :raise ValueError: If n is negative or over 100.
     """
@@ -64,7 +65,7 @@ def movie_generator(n: int) -> list[Movie]:
                 original_title=f"The Movie {i:02d}",
                 directors=["Christopher Nolan"],
                 cast=["Christian Bale", "Heath Ledger", "Michael Caine"],
-                rating=i,
+                rating=rating or i,
                 runtime=120
             ))
 
@@ -100,7 +101,7 @@ def streaming_option_generator(n: int, movie_id: str, country_code: str, service
     """
     Creates n StreamingOptions, with zero-indexed naming, and returning them in a List.
 
-    :param int: The number of streaming options to create.
+    :param n: The number of streaming options to create.
     :param movie_id: The movie ID to create streaming options for.
     :param country_code: The country code to create streaming options for.
     :param service_id: The service ID to create streaming options for.
