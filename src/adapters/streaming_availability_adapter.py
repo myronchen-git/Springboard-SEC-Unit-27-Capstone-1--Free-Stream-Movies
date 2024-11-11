@@ -1,3 +1,4 @@
+import time
 from pathlib import Path
 
 from src.common_constants import BLACKLISTED_SERVICES
@@ -133,15 +134,16 @@ def gather_streaming_options(country_streaming_options_data: dict, movie_id: str
     :return: A list of dicts containing StreamingOption attributes.
     """
 
-    # import pdb
-    # pdb.set_trace()
+    current_timestamp = time.time()
 
     streaming_options = []
     for country_code, streaming_options_data in country_streaming_options_data.items():
 
         for streaming_option_data in streaming_options_data:
             if streaming_option_data['type'] == 'free' \
-                    and streaming_option_data['service']['id'].lower() not in BLACKLISTED_SERVICES:
+                    and streaming_option_data['service']['id'].lower() not in BLACKLISTED_SERVICES \
+                    and (streaming_option_data['expiresOn'] > current_timestamp
+                         if 'expiresOn' in streaming_option_data else True):
 
                 streaming_option = transform_streaming_option_json_into_dict(
                     streaming_option_data, movie_id, country_code)

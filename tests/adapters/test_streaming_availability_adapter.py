@@ -8,6 +8,7 @@ sys.path.append(root_dir)  # nopep8
 
 # --------------------------------------------------
 
+import time
 from copy import deepcopy
 from unittest import TestCase
 from unittest.mock import call, patch
@@ -205,6 +206,51 @@ class StreamingAvailabilityAdapterUnitTests(TestCase):
                 mock_transform_streaming_option_json_into_dict.reset_mock()
 
     @patch('src.adapters.streaming_availability_adapter.transform_streaming_option_json_into_dict', autospec=True)
+    @patch('src.adapters.streaming_availability_adapter.BLACKLISTED_SERVICES', new={})
+    def test_gather_streaming_options_with_unexpired_streams(
+            self,
+            mock_transform_streaming_option_json_into_dict):
+        """Returns a list of streaming options that have unexpired streaming options."""
+
+        # Arrange
+        expiration_timestamp = round(time.time()) + 60 * 10
+
+        streaming_option_test_data = {
+            'service': {
+                'id': 'tubi'
+            },
+            'type': 'free',
+            'expiresOn': expiration_timestamp
+        }
+
+        country_streaming_options_data = {
+            'us': [deepcopy(streaming_option_test_data)]
+        }
+
+        movie_id = show_stargate['id']
+
+        # Arrange mocks
+        expected_streaming_option = {
+            'movie_id': movie_id,
+            'country_code': 'us',
+            'service_id': 'tubi',
+            'expires_on': expiration_timestamp
+        }
+
+        mock_transform_streaming_option_json_into_dict.return_value = expected_streaming_option
+
+        # Act
+        result = gather_streaming_options(country_streaming_options_data, movie_id)
+
+        # Assert
+        self.assertEqual(result, [expected_streaming_option])
+
+        self.assertEqual(
+            mock_transform_streaming_option_json_into_dict.call_args_list,
+            [call(streaming_option_test_data, movie_id, 'us')]
+        )
+
+    @patch('src.adapters.streaming_availability_adapter.transform_streaming_option_json_into_dict', autospec=True)
     @patch('src.adapters.streaming_availability_adapter.BLACKLISTED_SERVICES', new={'peacock'})
     def test_gather_streaming_options_with_no_free_options(
             self,
@@ -221,6 +267,37 @@ class StreamingAvailabilityAdapterUnitTests(TestCase):
 
         country_streaming_options_data = {
             'us': [deepcopy(streaming_option_test_data)]
+        }
+
+        movie_id = show_stargate['id']
+
+        # Arrange expected
+        expected_result = []
+
+        # Act
+        result = gather_streaming_options(country_streaming_options_data, movie_id)
+
+        # Assert
+        self.assertEqual(result, expected_result)
+
+        mock_transform_streaming_option_json_into_dict.assert_not_called()
+
+    @patch('src.adapters.streaming_availability_adapter.transform_streaming_option_json_into_dict', autospec=True)
+    @patch('src.adapters.streaming_availability_adapter.BLACKLISTED_SERVICES', new={})
+    def test_gather_streaming_options_with_expired_streams(
+            self,
+            mock_transform_streaming_option_json_into_dict):
+        """Returns an empty list if streaming options are expired."""
+
+        # Arrange
+        country_streaming_options_data = {
+            'us': [{
+                'service': {
+                    'id': 'tubi'
+                },
+                'type': 'free',
+                'expiresOn': round(time.time()) - 60 * 10
+            }]
         }
 
         movie_id = show_stargate['id']
@@ -255,19 +332,14 @@ class StreamingAvailabilityAdapterIntegrationTestsTransformShow(TestCase):
                 'link': link
             })
 
-        streaming_options = []
-        for country, options in show_stargate['streamingOptions'].items():
-            for i in range(1, 3):
-                streaming_option = {
-                    'movie_id': show_stargate['id'],
-                    'country_code': country,
-                    'service_id': options[i]['service']['id'],
-                    'link': options[i]['link'],
-                    'expires_soon': options[i]['expiresSoon']
-                }
-                if 'expiresOn' in options[i]:
-                    streaming_option['expires_on'] = options[i]['expiresOn']
-                streaming_options.append(streaming_option)
+        # There's only one viable streaming option as the first is not free and the third is expired.
+        streaming_options = [{
+            'movie_id': show_stargate['id'],
+            'country_code': 'us',
+            'service_id': show_stargate['streamingOptions']['us'][1]['service']['id'],
+            'link': show_stargate['streamingOptions']['us'][1]['link'],
+            'expires_soon': show_stargate['streamingOptions']['us'][1]['expiresSoon']
+        }]
 
         expected_result = {
             'movies': [{

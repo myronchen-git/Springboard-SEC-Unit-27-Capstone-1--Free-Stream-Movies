@@ -284,7 +284,6 @@ class MovieDetailsViewIntegrationTests(TestCase):
             self.assertEqual(resp.status_code, 200)
             self.assertIn(show_stargate['title'], html)
             self.assertIn(show_stargate['streamingOptions']['us'][1]['link'], html)
-            self.assertIn(show_stargate['streamingOptions']['us'][2]['link'], html)
 
             self.assertIn(expected_movie_poster_link_path, html)
             self.assertIn(f'alt="{show_stargate['title']} Poster"', html)
