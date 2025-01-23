@@ -25,4 +25,10 @@ def create_logger(module_name: str, filepath: str) -> logging.Logger:
 
     logger.addHandler(file_handler)
 
+    stream_handler = logging.StreamHandler()
+    stream_handler.setLevel(logging.DEBUG)
+    stream_handler.setFormatter(formatter)
+
+    logger.addHandler(stream_handler)
+
     return logger
