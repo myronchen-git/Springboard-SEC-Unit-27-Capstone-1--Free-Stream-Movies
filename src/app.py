@@ -44,6 +44,9 @@ app_service = AppService()
 
 logger = create_logger(__name__, 'src/logs/app.log')
 
+# temp for testing
+logger.info(f'RAPID_API_KEY = {RAPID_API_KEY}')
+
 # --------------------------------------------------
 
 
