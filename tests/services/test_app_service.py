@@ -32,16 +32,17 @@ db.create_all()
 
 
 @patch('src.services.app_service.requests', autospec=True)
-@patch('src.services.app_service.RAPID_API_KEY')
 class AppServiceSearchMoviesByTitleUnitTests(TestCase):
     """Unit tests for AppService.search_movies_by_title()."""
+
+    api_key = 'api_key'
 
     def setUp(self):
         # Arrange
         self.country_code = 'us'
         self.title = 'batman'
 
-        self.app_service = AppService()
+        self.app_service = AppService(self.api_key)
         self.url = f'{self.app_service.STREAMING_AVAILABILITY_BASE_URL}/shows/search/title'
 
         # Arrange expected
@@ -51,7 +52,6 @@ class AppServiceSearchMoviesByTitleUnitTests(TestCase):
 
     def test_search_for_a_movie(
             self,
-            mock_RAPID_API_KEY,
             mock_requests
     ):
         """Searching for a movie returns a list of movies in JSON format."""
@@ -69,7 +69,7 @@ class AppServiceSearchMoviesByTitleUnitTests(TestCase):
         mock_requests.get.return_value = mock_response
 
         # Arrange expected
-        expected_headers = {'X-RapidAPI-Key': mock_RAPID_API_KEY}
+        expected_headers = {'X-RapidAPI-Key': self.api_key}
 
         # Act
         result = self.app_service.search_movies_by_title(self.country_code, self.title)
@@ -84,7 +84,6 @@ class AppServiceSearchMoviesByTitleUnitTests(TestCase):
 
     def test_status_code_not_200(
             self,
-            mock_RAPID_API_KEY,
             mock_requests
     ):
         """Receiving a response status code that is not 200 should throw an exception."""
@@ -95,7 +94,7 @@ class AppServiceSearchMoviesByTitleUnitTests(TestCase):
         mock_requests.get.return_value = mock_response
 
         # Arrange expected
-        expected_headers = {'X-RapidAPI-Key': mock_RAPID_API_KEY}
+        expected_headers = {'X-RapidAPI-Key': self.api_key}
 
         # Act/Assert
         self.assertRaises(
@@ -118,21 +117,21 @@ class AppServiceSearchMoviesByTitleUnitTests(TestCase):
 @patch('src.services.app_service.Movie', autospec=True)
 @patch('src.services.app_service.transform_show', autospec=True)
 @patch('src.services.app_service.requests', autospec=True)
-@patch('src.services.app_service.RAPID_API_KEY')
 class AppServiceGetMovieDataUnitTests(TestCase):
     """Unit tests for AppService.get_movie_data()."""
+
+    api_key = 'api_key'
 
     def setUp(self):
         self.movie_id = "123"
 
-        self.app_service = AppService()
+        self.app_service = AppService(self.api_key)
         self.url = f'{self.app_service.STREAMING_AVAILABILITY_BASE_URL}/shows/{self.movie_id}'
 
         self.returned_show_json = {'id': '1', 'title': 'movie1'}
 
     def test_gets_movie_data(
             self,
-            mock_RAPID_API_KEY,
             mock_requests,
             mock_transform_show,
             mock_Movie,
@@ -162,7 +161,7 @@ class AppServiceGetMovieDataUnitTests(TestCase):
         mock_convert_show_json_into_movie_object.return_value = mock_movie_object
 
         # Arrange expected
-        expected_headers = {'X-RapidAPI-Key': mock_RAPID_API_KEY}
+        expected_headers = {'X-RapidAPI-Key': self.api_key}
 
         # Act
         result = self.app_service.get_movie_data(self.movie_id)
@@ -186,7 +185,6 @@ class AppServiceGetMovieDataUnitTests(TestCase):
 
     def test_status_code_not_200(
             self,
-            mock_RAPID_API_KEY,
             mock_requests,
             mock_transform_show,
             mock_Movie,
@@ -203,7 +201,7 @@ class AppServiceGetMovieDataUnitTests(TestCase):
         mock_requests.get.return_value = mock_response
 
         # Arrange expected
-        expected_headers = {'X-RapidAPI-Key': mock_RAPID_API_KEY}
+        expected_headers = {'X-RapidAPI-Key': self.api_key}
 
         # Act/Assert
         self.assertRaises(
@@ -225,7 +223,6 @@ class AppServiceGetMovieDataUnitTests(TestCase):
 
     def test_database_commit_fail(
             self,
-            mock_RAPID_API_KEY,
             mock_requests,
             mock_transform_show,
             mock_Movie,
@@ -254,7 +251,7 @@ class AppServiceGetMovieDataUnitTests(TestCase):
         mock_db.session.commit.side_effect = UpsertError("")
 
         # Arrange expected
-        expected_headers = {'X-RapidAPI-Key': mock_RAPID_API_KEY}
+        expected_headers = {'X-RapidAPI-Key': self.api_key}
 
         # Act/Assert
         self.assertRaises(

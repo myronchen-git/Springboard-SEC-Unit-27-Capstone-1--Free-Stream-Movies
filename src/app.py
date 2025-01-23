@@ -40,7 +40,7 @@ STREAMING_AVAILABILITY_BASE_URL = "https://streaming-availability.p.rapidapi.com
 COOKIE_COUNTRY_CODE_NAME = 'countryCode'
 DEFAULT_COUNTRY_CODE = 'us'
 
-app_service = AppService()
+app_service = AppService(RAPID_API_KEY)
 
 logger = create_logger(__name__, 'src/logs/app.log')
 

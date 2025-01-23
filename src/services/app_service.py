@@ -1,5 +1,3 @@
-import os
-
 import requests
 
 from src.adapters.streaming_availability_adapter import (
@@ -15,8 +13,6 @@ from src.util.logger import create_logger
 
 # ==================================================
 
-RAPID_API_KEY = os.environ.get('RAPID_API_KEY')
-
 logger = create_logger(__name__, 'src/logs/app.log')
 
 # --------------------------------------------------
@@ -25,8 +21,9 @@ logger = create_logger(__name__, 'src/logs/app.log')
 class AppService:
     """Service-level code for app."""
 
-    def __init__(self):
+    def __init__(self, RAPID_API_KEY):
         self.STREAMING_AVAILABILITY_BASE_URL = 'https://streaming-availability.p.rapidapi.com'
+        self.RAPID_API_KEY = RAPID_API_KEY
 
     def search_movies_by_title(self, country_code: str, title: str) -> list:
         """
@@ -43,7 +40,7 @@ class AppService:
         logger.info(f'Searching for movie "{title}" in country "{country_code}".')
 
         url = f'{self.STREAMING_AVAILABILITY_BASE_URL}/shows/search/title'
-        headers = {'x-rapidapi-key': RAPID_API_KEY, "x-rapidapi-host": "streaming-availability.p.rapidapi.com"}
+        headers = {'X-RapidAPI-Key': self.RAPID_API_KEY}
         querystring = {'country': country_code,
                        'title': title,
                        'show_type': 'movie'}
@@ -82,7 +79,7 @@ class AppService:
         logger.info(f'Retrieving details for movie ID {movie_id}.')
 
         url = f"{self.STREAMING_AVAILABILITY_BASE_URL}/shows/{movie_id}"
-        headers = {'X-RapidAPI-Key': RAPID_API_KEY}
+        headers = {'X-RapidAPI-Key': self.RAPID_API_KEY}
 
         resp = requests.get(url, headers=headers)
         show = resp.json()
