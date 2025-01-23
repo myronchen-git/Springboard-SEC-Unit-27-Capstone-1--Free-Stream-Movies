@@ -43,7 +43,7 @@ class AppService:
         logger.info(f'Searching for movie "{title}" in country "{country_code}".')
 
         url = f'{self.STREAMING_AVAILABILITY_BASE_URL}/shows/search/title'
-        headers = {'X-RapidAPI-Key': RAPID_API_KEY}
+        headers = {'x-rapidapi-key': RAPID_API_KEY, "x-rapidapi-host": "streaming-availability.p.rapidapi.com"}
         querystring = {'country': country_code,
                        'title': title,
                        'show_type': 'movie'}
