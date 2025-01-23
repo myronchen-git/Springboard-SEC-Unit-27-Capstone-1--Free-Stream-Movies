@@ -48,6 +48,10 @@ class AppService:
                        'title': title,
                        'show_type': 'movie'}
 
+        logger.info(f'url = {url}')
+        logger.info(f'headers = {headers}')
+        logger.info(f'querystring = {querystring}')
+
         resp = requests.get(url, headers=headers, params=querystring)
 
         if resp.status_code == 200:
