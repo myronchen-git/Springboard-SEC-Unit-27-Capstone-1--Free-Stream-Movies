@@ -16,6 +16,8 @@ from sqlalchemy.exc import DatabaseError, DBAPIError
 
 from src.app import create_app
 from src.models.common import connect_db, db
+from src.models.movie import Movie
+from src.models.service import Service
 from src.models.streaming_option import StreamingOption
 from tests.utilities import (movie_generator, service_generator,
                              streaming_option_generator)
@@ -45,6 +47,10 @@ class StreamingOptionApiTestCase(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        db.session.query(Movie).delete()
+        db.session.query(Service).delete()
+        db.session.commit()
+
         service = service_generator(1)[0]
         movie = movie_generator(1)[0]
         cls.movie_id = movie.id
