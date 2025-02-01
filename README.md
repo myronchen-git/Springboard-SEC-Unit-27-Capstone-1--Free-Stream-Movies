@@ -12,27 +12,27 @@ is free.
 
 ## Features
 
--   Allow selecting a country to display free movies for. The choice will be saved in a browser cookie.
-    -   The movie data isn't restricted only to the United States. To allow everyone to benefit, and to not needlessly
-        show streaming options a user can not use, movies are displayed in accordance to country, with users being
-        able to select the country. This allows the web app to be used across the world.
--   List streaming services that provide free streaming options, and their movies.
-    -   This is the main feature of the the website. This shows what movies are available for free on what streaming
-        providers. This allows people to easily find free movies, instead of trying to find the movies by going through
-        lists of paid and subscription options, or filtering for free options.
--   Search all movies by title.
-    -   Allows users to easily find a specific movie, to see if it is free or to see its info.
--   Movie details page, which also displays list of links to streaming options.
-    -   Shows detailed info such as release year, cast, and runtime. Also shows all of the free streaming options
-        across different streaming providers.
--   User accounts.
-    -   Allows for future features such as adding movies to watchlists and emailing users when a movie becomes free.
--   Viewable on mobile devices and on desktops.
-    -   Most people view websites on their phones. Having the web app work well on both small and large screens allows
-        it to be accessible to a wider audience.
--   Database is easily updatable with new data from the external API.
-    -   Free streaming options do not last forever. To keep the displayed movies current, a developer can run a file
-        to call the API and to save the retrieved data into the database.
+- Allow selecting a country to display free movies for. The choice will be saved in a browser cookie.
+  - The movie data isn't restricted only to the United States. To allow everyone to benefit, and to not needlessly
+    show streaming options a user can not use, movies are displayed in accordance to country, with users being
+    able to select the country. This allows the web app to be used across the world.
+- List streaming services that provide free streaming options, and their movies.
+  - This is the main feature of the the website. This shows what movies are available for free on what streaming
+    providers. This allows people to easily find free movies, instead of trying to find the movies by going through
+    lists of paid and subscription options, or filtering for free options.
+- Search all movies by title.
+  - Allows users to easily find a specific movie, to see if it is free or to see its info.
+- Movie details page, which also displays list of links to streaming options.
+  - Shows detailed info such as release year, cast, and runtime. Also shows all of the free streaming options
+    across different streaming providers.
+- User accounts.
+  - Allows for future features such as adding movies to watchlists and emailing users when a movie becomes free.
+- Viewable on mobile devices and on desktops.
+  - Most people view websites on their phones. Having the web app work well on both small and large screens allows
+    it to be accessible to a wider audience.
+- Database is easily updatable with new data from the external API.
+  - Free streaming options do not last forever. To keep the displayed movies current, a developer can run a file
+    to call the API and to save the retrieved data into the database.
 
 ## User Flow
 
@@ -75,20 +75,20 @@ This has a limited number of streaming services.
 
 ## Tech Stack
 
--   Python
--   Flask
--   PostgresQL
--   Flask-SQLAlchemy
--   Flask-Bcrypt
--   Flask-Login
--   Flask-WTF (WTForms)
--   Jinja
--   HTML
--   CSS
--   JavaScript
--   JQuery
--   Axios
--   Bootstrap
+- Python
+- Flask
+- PostgresQL
+- Flask-SQLAlchemy
+- Flask-Bcrypt
+- Flask-Login
+- Flask-WTF (WTForms)
+- Jinja
+- HTML
+- CSS
+- JavaScript
+- JQuery
+- Axios
+- Bootstrap
 
 ## Other
 
@@ -104,23 +104,23 @@ https://docs.google.com/document/d/1WoXzewIRBwGr2g7bMLV0evk-s5cDGe1VeVO0oxh2WJI/
 
 1. Create a `.env` file in the root directory and include
 
-    - `SECRET_KEY` (secret key for Flask app)
-    - `RAPID_API_KEY` (API key for using Streaming Availability API)
+   - `SECRET_KEY` (secret key for Flask app)
+   - `RAPID_API_KEY` (API key for using Streaming Availability API)
 
 2. Seed local database by running
 
-    > py src/seed/streaming_availability_seeder.py
+   > py src/seed/streaming_availability_seeder.py
 
-    May need to manually uncomment/comment functions at bottom of file to choose what data to seed with.
-    Due to external API rate limits, the seeding will have to be done repeatedly over a few days.
+   May need to manually uncomment/comment functions at bottom of file to choose what data to seed with.
+   Due to external API rate limits, the seeding will have to be done repeatedly over a few days.
 
 3. Start app by running
 
-    > py src/app.py
+   > py src/app.py
 
 4. Occasionally update local database by running
 
-    > py src/seed/streaming_availability_updater.py
+   > py src/seed/streaming_availability_updater.py
 
 ### Running On A Web Host
 
@@ -143,9 +143,9 @@ A local database with data is needed beforehand.
 
 6. Dump local database into Supabase by opening terminal and running
 
-    > pg_dump -U {PostgreSQL user with permission} -O {local database name} | {PSQL string}
+   > pg_dump -U {PostgreSQL user with permission} -O {local database name} | {PSQL string}
 
-    - This seems to only work for new Supabase databases.
+   - This seems to only work for new Supabase databases.
 
 7. Input password for database dump.
 
@@ -161,17 +161,17 @@ A local database with data is needed beforehand.
 
 4. Set the start command to
 
-    > gunicorn prod_server:app.
+   > gunicorn prod_server:app.
 
 5. Set environment variables:
 
-    1. `DATABASE_URL` = URL from Supabase
-    2. `PYTHON_VERSION` = 3.12.4
+   1. `DATABASE_URL` = URL from Supabase
+   2. `PYTHON_VERSION` = 3.12.4
 
 6. In the "Secret Files" section, create a file named `.env` and add
 
-    - `SECRET_KEY` (secret key for Flask app)
-    - `RAPID_API_KEY` (API key for using Streaming Availability API)
+   - `SECRET_KEY` (secret key for Flask app)
+   - `RAPID_API_KEY` (API key for using Streaming Availability API)
 
 7. Create the web service.
 
@@ -181,7 +181,7 @@ A local database with data is needed beforehand.
 
 1. First get Supabase database connection string info.
 
-    - For a project, **Project Settings > Database > Connection string > Python**.
+   - For a project, **Project Settings > Database > Connection string > Python**.
 
 2. In pgAdmin's Object Explorer window, right-click and select **Servers > Register > Server**.
 
@@ -189,11 +189,11 @@ A local database with data is needed beforehand.
 
 4. Under Connection tab, input/change the following by using the Supabase connection info.
 
-    - Host name/address
-    - Port
-    - Username
-    - Password (database's)
-    - Enable Save Password
+   - Host name/address
+   - Port
+   - Username
+   - Password (database's)
+   - Enable Save Password
 
 5. Save the new server.
 
@@ -214,3 +214,16 @@ A local database with data is needed beforehand.
 13. Under Query Options, enable "Clean before restore".
 
 14. Click Restore.
+
+## How To Run Tests
+
+### Run all tests
+
+`py -m unittest tests/*/test_*.py`
+
+### Run all tests with coverage
+
+1. `coverage run -m unittest tests/*/test_*.py`
+2. `coverage html`
+
+The coverage report will be generated in the `htmlcov` folder.
