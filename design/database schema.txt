@@ -15,7 +15,7 @@ Table services {
 
 Table countries_services {
   country_code string(2) [primary key]
-  service_id text [primary key, ref: <> services.id]
+  service_id text [primary key, ref: > services.id]
 }
 
 Table movies {
