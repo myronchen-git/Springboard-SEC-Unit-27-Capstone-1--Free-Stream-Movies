@@ -4,6 +4,18 @@ https://myron-chen-free-stream-movies.onrender.com/
 
 A website for finding free movies to stream.
 
+### Home page
+
+<img src="readme_files/home_page.jpg" alt="Home page" width="600"/>
+
+### Details page
+
+<img src="readme_files/details_page.jpg" alt="Details page" width="600"/>
+
+### Search results
+
+<img src="readme_files/search_results.jpg" alt="Search Results" width="600"/>
+
 ## Overview
 
 This web app shows a list of streaming services that provide currently available free movies to stream. Users can
