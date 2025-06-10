@@ -1,0 +1,8 @@
+{
+  "primary": { "src": "home_page.jpg", "alt": "Home page" },
+  "all": [
+    { "src": "home_page.jpg", "alt": "Home page" },
+    { "src": "details_page.jpg", "alt": "Details page" },
+    { "src": "search_results.jpg", "alt": "Search Results" }
+  ]
+}
